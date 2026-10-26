@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Event Planner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+        <section id="event-form-section">
+            <h2>Create New Event</h2>
+            <form id="create-event-form">
+                <input type="text" id="eventName" placeholder="Event Name (e.g., John's 25th)" required>
+                <select id="eventType" required>
+                    <option value="">Select Event Type</option>
+                    <option value="Wedding">Wedding</option>
+                    <option value="Birthday">Birthday</option>
+                    <option value="Community">Community Event</option>
+                </select>
+                <input type="date" id="eventDate" required>
+                <input type="text" id="eventLocation" placeholder="Location" required>
+                <input type="number" id="guestCount" placeholder="Guest Count" required>
+                <input type="number" id="eventBudget" placeholder="Budget (₹)" required>
+                <textarea id="eventPreferences" placeholder="Any preferences? (e.g., Outdoor, Vegan food)"></textarea>
+                <button type="submit">Save Event</button>
+            </form>
+        </section>
+        
+        <section id="dashboard-section">
+            <h2>My Events</h2>
+            <div id="events-list"></div>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>
