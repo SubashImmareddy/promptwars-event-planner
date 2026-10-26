@@ -5,3 +5,6 @@ input, select, textarea, button { display: block; width: 100%; margin-bottom: 15
 button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
 button:hover { background: #0056b3; }
 .event-card { border: 1px solid #eee; padding: 15px; margin-bottom: 10px; border-radius: 6px; background: #fafafa; }
+.ai-plan-box { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; font-size: 14px; }
+.btn-secondary { background: #6c757d; margin-top: 10px; }
+.btn-secondary:hover { background: #5a6268; }
