@@ -3,43 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Event Planner</title>
+    <title>AI Event Architect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
-    <main>
-        <section id="event-form-section">
-            <h2>Create New Event</h2>
-            <form id="create-event-form">
-                <input type="text" id="eventName" placeholder="Event Name (e.g., John's 25th)" required>
-                <select id="eventType" required>
-                    <option value="">Select Event Type</option>
-                    <option value="Wedding">Wedding</option>
-                    <option value="Birthday">Birthday</option>
-                    <option value="Community">Community Event</option>
-                </select>
-                <input type="date" id="eventDate" required>
-                <input type="text" id="eventLocation" placeholder="Location" required>
-                <input type="number" id="guestCount" placeholder="Guest Count" required>
-                <input type="number" id="eventBudget" placeholder="Budget (₹)" required>
-                <textarea id="eventPreferences" placeholder="Any preferences? (e.g., Outdoor, Vegan food)"></textarea>
-                <button type="submit">Save Event</button>
-            </form>
-        </section>
-        
-<section id="settings-section">
-    <h2>Settings</h2>
-    <input type="password" id="apiKeyInput" placeholder="Enter Gemini API Key (Saved locally only)">
-    <button onclick="saveApiKey()">Save API Key</button>
-    <p id="keyStatus" style="font-size: 12px; color: green;"></p>
-</section>
-        
-        <section id="dashboard-section">
-            <h2>My Events</h2>
-            <div id="events-list"></div>
-        </section>
-    </main>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">✨ AI Planner</div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" onclick="switchTab('tab-dashboard')">📊 Dashboard</button>
+                <button class="nav-btn" onclick="switchTab('tab-create')">➕ New Event</button>
+                <button class="nav-btn" onclick="switchTab('tab-settings')">⚙️ Settings</button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            
+            <!-- Tab: Dashboard -->
+            <section id="tab-dashboard" class="tab-pane active">
+                <header class="page-header">
+                    <h2>My Events</h2>
+                    <p>Select an event to open its workspace.</p>
+                </header>
+                <div id="events-grid" class="events-grid"></div>
+            </section>
+
+            <!-- Tab: Create Event -->
+            <section id="tab-create" class="tab-pane">
+                <header class="page-header">
+                    <h2>Create New Event</h2>
+                    <p>Enter details to generate an AI-powered plan.</p>
+                </header>
+                <div class="card form-card">
+                    <form id="create-event-form">
+                        <div class="form-row">
+                            <input type="text" id="eventName" placeholder="Event Name (e.g., John's 25th)" required>
+                            <select id="eventType" required>
+                                <option value="">Select Event Type</option>
+                                <option value="Wedding">Wedding</option>
+                                <option value="Birthday">Birthday</option>
+                                <option value="Community">Community Event</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <input type="date" id="eventDate" required>
+                            <input type="text" id="eventLocation" placeholder="Location" required>
+                        </div>
+                        <div class="form-row">
+                            <input type="number" id="guestCount" placeholder="Guest Count" required>
+                            <input type="number" id="eventBudget" placeholder="Total Budget (₹)" required>
+                        </div>
+                        <textarea id="eventPreferences" placeholder="Any preferences? (e.g., Outdoor, Vegan food, Neon lights)"></textarea>
+                        <button type="submit" class="btn-primary">Save Event & Go to Dashboard</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Tab: Settings -->
+            <section id="tab-settings" class="tab-pane">
+                <header class="page-header">
+                    <h2>System Settings</h2>
+                    <p>Manage your integrations and API keys.</p>
+                </header>
+                <div class="card">
+                    <h3>Gemini AI Integration</h3>
+                    <p class="text-muted" style="margin-bottom: 15px;">Your key is stored securely in this browser and never uploaded.</p>
+                    <div style="display:flex; gap:10px;">
+                        <input type="password" id="apiKeyInput" placeholder="Enter Gemini API Key" style="margin:0;">
+                        <button onclick="saveApiKey()" class="btn-primary" style="width:auto; white-space:nowrap;">Save Key</button>
+                    </div>
+                    <p id="keyStatus" class="status-msg"></p>
+                </div>
+            </section>
+
+            <!-- Tab: Event Workspace -->
+            <section id="tab-workspace" class="tab-pane">
+                <div class="workspace-header">
+                    <button class="btn-back" onclick="switchTab('tab-dashboard')">← Back to Dashboard</button>
+                    <h2 id="ws-title">Event Workspace</h2>
+                </div>
+                <div id="workspace-content" class="workspace-grid">
+                    <!-- Dynamic Workspace content injects here -->
+                </div>
+            </section>
+
+        </main>
+    </div>
     <script src="app.js"></script>
 </body>
 </html>
