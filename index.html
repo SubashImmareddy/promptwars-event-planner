@@ -6,10 +6,37 @@
     <title>AI Event Architect</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- Load Supabase synchronously to prevent JS crashing -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="app-layout">
-        <!-- Sidebar Navigation -->
+    <!-- LOGIN SCREEN OVERLAY -->
+    <div id="login-screen" class="login-overlay">
+        <div class="login-card">
+            <h2>✨ AI Event Architect</h2>
+            <p class="text-muted">Master Admin Portal</p>
+            
+            <div class="test-credentials">
+                <strong>Testing Credentials:</strong><br>
+                User: <code>admin</code><br>
+                Pass: <code>promptwars</code>
+            </div>
+
+            <div id="login-form">
+                <input type="text" id="loginUser" placeholder="Username" required style="margin-bottom: 10px;">
+                <input type="password" id="loginPass" placeholder="Password" required style="margin-bottom: 10px;">
+                <p id="loginError" style="color: red; font-size: 13px; display: none; margin-bottom: 0;">Incorrect credentials.</p>
+                <button type="button" onclick="handleLogin()" class="btn-primary" style="margin-top: 5px; width: 100%;">Login to Dashboard</button>
+            </div>
+            
+            <div style="margin-top: 20px; font-size: 13px;">
+                Need an account? <a href="mailto:admin@example.com" style="color: var(--primary); text-decoration: none;">Contact Administrator</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP LAYOUT (Hidden by default) -->
+    <div class="app-layout" id="main-app" style="display: none;">
         <aside class="sidebar">
             <div class="brand">✨ AI Planner</div>
             <nav class="nav-menu">
@@ -17,12 +44,10 @@
                 <button class="nav-btn" onclick="switchTab('tab-create')">➕ New Event</button>
                 <button class="nav-btn" onclick="switchTab('tab-settings')">⚙️ Settings</button>
             </nav>
+            <div class="watermark">© 2026 Copyrighted to Subash Reddy</div>
         </aside>
 
-        <!-- Main Content Area -->
         <main class="content-area">
-            
-            <!-- Tab: Dashboard -->
             <section id="tab-dashboard" class="tab-pane active">
                 <header class="page-header">
                     <h2>My Events</h2>
@@ -31,7 +56,6 @@
                 <div id="events-grid" class="events-grid"></div>
             </section>
 
-            <!-- Tab: Create Event -->
             <section id="tab-create" class="tab-pane">
                 <header class="page-header">
                     <h2>Create New Event</h2>
@@ -56,13 +80,12 @@
                             <input type="number" id="guestCount" placeholder="Guest Count" required>
                             <input type="number" id="eventBudget" placeholder="Total Budget (₹)" required>
                         </div>
-                        <textarea id="eventPreferences" placeholder="Any preferences? (e.g., Outdoor, Vegan food, Neon lights)"></textarea>
+                        <textarea id="eventPreferences" placeholder="Any preferences? (e.g., Outdoor, Vegan food)"></textarea>
                         <button type="submit" class="btn-primary">Save Event & Go to Dashboard</button>
                     </form>
                 </div>
             </section>
 
-            <!-- Tab: Settings -->
             <section id="tab-settings" class="tab-pane">
                 <header class="page-header">
                     <h2>System Settings</h2>
@@ -79,19 +102,17 @@
                 </div>
             </section>
 
-            <!-- Tab: Event Workspace -->
             <section id="tab-workspace" class="tab-pane">
                 <div class="workspace-header">
                     <button class="btn-back" onclick="switchTab('tab-dashboard')">← Back to Dashboard</button>
                     <h2 id="ws-title">Event Workspace</h2>
                 </div>
-                <div id="workspace-content" class="workspace-grid">
-                    <!-- Dynamic Workspace content injects here -->
-                </div>
+                <div id="workspace-content" class="workspace-grid"></div>
             </section>
-
         </main>
     </div>
+
+    <!-- Main App Script -->
     <script src="app.js"></script>
 </body>
 </html>
