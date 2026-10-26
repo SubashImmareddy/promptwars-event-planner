@@ -8,3 +8,17 @@ button:hover { background: #0056b3; }
 .ai-plan-box { margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; font-size: 14px; }
 .btn-secondary { background: #6c757d; margin-top: 10px; }
 .btn-secondary:hover { background: #5a6268; }
+/* Accessibility: Keyboard Focus Indicators */
+input:focus, select:focus, textarea:focus, button:focus {
+    outline: 2px solid #0056b3;
+    outline-offset: 2px;
+}
+
+/* Efficiency & Accessibility: Mobile Responsive Layout */
+@media (max-width: 600px) {
+    body { padding: 10px; }
+    main { width: 100%; }
+    .event-card { padding: 10px; }
+    div[style*="display:flex"] { flex-direction: column; }
+    div[style*="display:flex"] button { width: 100% !important; margin-top: 5px !important; }
+}
