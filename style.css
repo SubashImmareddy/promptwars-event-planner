@@ -16,17 +16,17 @@
 }
 
 [data-theme="dark"] {
-    /* Dark Theme */
+    /* Dark Theme - Contrast Improved */
     --bg-main: #09090B;
     --bg-header: #18181B;
     --bg-sidebar: #18181B;
     --card-bg: #18181B;
     --text-main: #F9FAFB;
     --text-muted: #A1A1AA;
-    --border: #27272A;
-    --input-bg: #09090B;
+    --border: #3F3F46; /* Brighter border so inputs are clearly defined */
+    --input-bg: #09090B; /* Darker input background for depth */
     --danger: #F87171;
-    --danger-bg: rgba(239, 68, 68, 0.1);
+    --danger-bg: rgba(239, 68, 68, 0.15);
 }
 
 body { 
@@ -137,6 +137,16 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
 textarea { min-height: 110px; resize: vertical; }
+
+/* FIX FOR BROWSER AUTOFILL IN DARK MODE */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--input-bg) inset !important;
+    -webkit-text-fill-color: var(--text-main) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
 
 /* Buttons */
 .btn-primary { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
