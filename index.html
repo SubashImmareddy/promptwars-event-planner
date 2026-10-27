@@ -53,7 +53,7 @@
     <!-- PREMIUM LOGIN SCREEN -->
     <div id="login-screen" class="login-overlay">
         <div class="login-card">
-            <div class="brand-logo">NexusPlan</div>
+            <img src="NexusPlan Tech Logo.png" alt="NexusPlan Logo" class="brand-logo-img">
             <p class="text-muted" style="margin-bottom: 25px;">Admin Workspace Portal</p>
             
             <div class="test-credentials">
@@ -90,7 +90,7 @@
         <header class="top-navbar">
             <div class="nav-left">
                 <button onclick="toggleSidebar()" class="hamburger-btn">☰</button>
-                <div class="brand-top">NexusPlan</div>
+                <img src="NexusPlan Tech Logo.png" alt="NexusPlan Logo" class="brand-top-img">
             </div>
             <div class="nav-right">
                 <div class="profile-menu-container">
@@ -154,10 +154,16 @@
                                     <option value="Wedding">Wedding</option>
                                     <option value="Birthday">Birthday</option>
                                     <option value="Community">Community Gathering</option>
+                                    <option value="Conference">Conference / Summit</option>
+                                    <option value="Workshop">Workshop / Training</option>
+                                    <option value="Concert">Concert / Live Show</option>
+                                    <option value="Meetup">Networking Meetup</option>
+                                    <option value="Other">Other / Custom Event</option>
                                 </select>
                             </div>
                             <div class="form-row">
-                                <input type="date" id="eventDate" required>
+                                <!-- Calendar anywhere-click fix implemented here -->
+                                <input type="date" id="eventDate" required onclick="if(this.showPicker) this.showPicker();" style="cursor: pointer;">
                                 <input type="text" id="eventLocation" placeholder="Location" required>
                             </div>
                             <div class="form-row">

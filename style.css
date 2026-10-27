@@ -16,15 +16,16 @@
 }
 
 [data-theme="dark"] {
-    /* Dark Theme - Contrast Improved */
+    /* Dark Theme */
+    color-scheme: dark;
     --bg-main: #09090B;
     --bg-header: #18181B;
     --bg-sidebar: #18181B;
     --card-bg: #18181B;
     --text-main: #F9FAFB;
     --text-muted: #A1A1AA;
-    --border: #3F3F46; /* Brighter border so inputs are clearly defined */
-    --input-bg: #09090B; /* Darker input background for depth */
+    --border: #3F3F46; 
+    --input-bg: #09090B; 
     --danger: #F87171;
     --danger-bg: rgba(239, 68, 68, 0.15);
 }
@@ -48,7 +49,7 @@ body.font-large input, body.font-large select, body.font-large textarea, body.fo
 .app-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
 .app-body { display: flex; flex: 1; overflow: hidden; }
 
-/* Top Navbar */
+/* Top Navbar & Logos */
 .top-navbar {
     height: 64px; background: var(--bg-header);
     border-bottom: 1px solid var(--border);
@@ -57,7 +58,22 @@ body.font-large input, body.font-large select, body.font-large textarea, body.fo
 }
 .nav-left, .nav-right { display: flex; align-items: center; gap: 15px; }
 .hamburger-btn { background: none; border: none; font-size: 20px; color: var(--text-main); cursor: pointer; padding: 5px; }
-.brand-top { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+
+/* Logo Default Styles */
+.brand-top-img { height: 36px; width: auto; object-fit: contain; border-radius: 6px; transition: all 0.3s ease; }
+.brand-logo-img { display: block; margin: 0 auto 15px auto; max-width: 240px; height: auto; border-radius: 8px; transition: all 0.3s ease; }
+
+/* DYNAMIC LOGO PLATE FOR DARK MODE */
+[data-theme="dark"] .brand-top-img {
+    background-color: #FAFAFA;
+    padding: 4px 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+[data-theme="dark"] .brand-logo-img {
+    background-color: #FAFAFA;
+    padding: 15px 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
 
 /* Profile Dropdown */
 .profile-menu-container { position: relative; }
@@ -148,6 +164,16 @@ input:-webkit-autofill:active {
     transition: background-color 5000s ease-in-out 0s;
 }
 
+/* FIX NATIVE CALENDAR ICON IN DARK MODE */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.7;
+    cursor: pointer;
+}
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
 /* Buttons */
 .btn-primary { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; }
 .btn-primary:hover { background: var(--primary-hover); }
@@ -182,7 +208,8 @@ ul.checklist li:last-child { border-bottom: none; }
     width: 100%; max-width: 420px; text-align: center; 
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1); 
 }
-.brand-logo { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 5px; }
+.modal-card { background: var(--card-bg); border-color: var(--border); color: var(--text-main); }
+
 .test-credentials { background: var(--input-bg); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin: 0 0 25px 0; font-size: 14px; text-align: left; }
 .test-credentials code { background: var(--border); padding: 2px 6px; border-radius: 4px; font-weight: 600; color: var(--primary); }
 .input-group { margin-bottom: 15px; }

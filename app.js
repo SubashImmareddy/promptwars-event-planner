@@ -21,7 +21,6 @@ document.body.classList.add(`font-${savedFontSize}`);
 function initTheme() {
     const savedTheme = localStorage.getItem('theme');
     if (!savedTheme) {
-        // Adapt to system preference on first visit
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         const themeToSet = prefersDark ? 'dark' : 'light';
         document.body.setAttribute('data-theme', themeToSet);
@@ -36,7 +35,6 @@ function initTheme() {
 }
 initTheme();
 
-// Custom Toast Function for System Alerts
 function showToastNotice(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
@@ -50,7 +48,6 @@ function showToastNotice(message) {
     document.body.appendChild(toast);
     setTimeout(() => { if (toast.parentElement) toast.remove(); }, 6000);
 }
-
 
 // ==========================================
 // 2. AUTH, LAYOUT TOGGLES & LOGOUT
@@ -75,7 +72,6 @@ function handleLogin() {
         document.getElementById('main-app').style.display = 'flex';
         syncDatabase();
         
-        // Explicitly trigger API Modal popup after login if no key exists
         if (!localStorage.getItem('geminiApiKey') && !sessionStorage.getItem('apiPromptShown')) {
             setTimeout(() => {
                 document.getElementById('api-notice-modal').style.display = 'flex';
@@ -87,7 +83,6 @@ function handleLogin() {
     }
 }
 
-// Custom Logout Modal Logic
 function confirmLogout() {
     document.getElementById('logout-modal').style.display = 'flex';
 }
