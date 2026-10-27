@@ -3,116 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Event Architect</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>NexusPlan - Professional Event Architect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- Load Supabase synchronously to prevent JS crashing -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-    <!-- LOGIN SCREEN OVERLAY -->
-    <div id="login-screen" class="login-overlay">
-        <div class="login-card">
-            <h2>✨ AI Event Architect</h2>
-            <p class="text-muted">Master Admin Portal</p>
-            
-            <div class="test-credentials">
-                <strong>Testing Credentials:</strong><br>
-                User: <code>admin</code><br>
-                Pass: <code>promptwars</code>
-            </div>
+<body data-theme="light" class="font-medium">
 
-            <div id="login-form">
-                <input type="text" id="loginUser" placeholder="Username" required style="margin-bottom: 10px;">
-                <input type="password" id="loginPass" placeholder="Password" required style="margin-bottom: 10px;">
-                <p id="loginError" style="color: red; font-size: 13px; display: none; margin-bottom: 0;">Incorrect credentials.</p>
-                <button type="button" onclick="handleLogin()" class="btn-primary" style="margin-top: 5px; width: 100%;">Login to Dashboard</button>
+    <!-- CONTACT ADMIN MODAL -->
+    <div id="contact-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top: 0;">Contact Administrator</h3>
+            <div style="margin: 20px 0; text-align: left; line-height: 1.6;">
+                <p><strong>Administrator:</strong> Subash Reddy</p>
+                <p><strong>Email:</strong> <a href="mailto:subashacademics475@gmail.com" style="color: var(--primary);">subashacademics475@gmail.com</a></p>
+                <p class="text-muted" style="font-size: 13px; margin-top: 10px;">Please reach out for enterprise access or API troubleshooting.</p>
             </div>
-            
-            <div style="margin-top: 20px; font-size: 13px;">
-                Need an account? <a href="mailto:admin@example.com" style="color: var(--primary); text-decoration: none;">Contact Administrator</a>
+            <button onclick="closeContactModal()" class="btn-secondary" style="width: 100%;">Close</button>
+        </div>
+    </div>
+
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div id="logout-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top: 0;">Confirm Logout</h3>
+            <p class="text-muted" style="margin: 15px 0 25px 0;">Are you sure you want to securely log out of the NexusPlan workspace?</p>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeLogoutModal()" class="btn-secondary" style="flex: 1;">Cancel</button>
+                <button onclick="executeLogout()" class="btn-danger" style="flex: 1;">Logout</button>
             </div>
         </div>
     </div>
 
-    <!-- MAIN APP LAYOUT (Hidden by default) -->
-    <div class="app-layout" id="main-app" style="display: none;">
-        <aside class="sidebar">
-            <div class="brand">✨ AI Planner</div>
-            <nav class="nav-menu">
-                <button class="nav-btn active" onclick="switchTab('tab-dashboard')">📊 Dashboard</button>
-                <button class="nav-btn" onclick="switchTab('tab-create')">➕ New Event</button>
-                <button class="nav-btn" onclick="switchTab('tab-settings')">⚙️ Settings</button>
-            </nav>
-            <div class="watermark">© 2026 Copyrighted to Subash Reddy</div>
-        </aside>
-
-        <main class="content-area">
-            <section id="tab-dashboard" class="tab-pane active">
-                <header class="page-header">
-                    <h2>My Events</h2>
-                    <p>Select an event to open its workspace.</p>
-                </header>
-                <div id="events-grid" class="events-grid"></div>
-            </section>
-
-            <section id="tab-create" class="tab-pane">
-                <header class="page-header">
-                    <h2>Create New Event</h2>
-                    <p>Enter details to generate an AI-powered plan.</p>
-                </header>
-                <div class="card form-card">
-                    <form id="create-event-form">
-                        <div class="form-row">
-                            <input type="text" id="eventName" placeholder="Event Name (e.g., John's 25th)" required>
-                            <select id="eventType" required>
-                                <option value="">Select Event Type</option>
-                                <option value="Wedding">Wedding</option>
-                                <option value="Birthday">Birthday</option>
-                                <option value="Community">Community Event</option>
-                            </select>
-                        </div>
-                        <div class="form-row">
-                            <input type="date" id="eventDate" required>
-                            <input type="text" id="eventLocation" placeholder="Location" required>
-                        </div>
-                        <div class="form-row">
-                            <input type="number" id="guestCount" placeholder="Guest Count" required>
-                            <input type="number" id="eventBudget" placeholder="Total Budget (₹)" required>
-                        </div>
-                        <textarea id="eventPreferences" placeholder="Any preferences? (e.g., Outdoor, Vegan food)"></textarea>
-                        <button type="submit" class="btn-primary">Save Event & Go to Dashboard</button>
-                    </form>
-                </div>
-            </section>
-
-            <section id="tab-settings" class="tab-pane">
-                <header class="page-header">
-                    <h2>System Settings</h2>
-                    <p>Manage your integrations and API keys.</p>
-                </header>
-                <div class="card">
-                    <h3>Gemini AI Integration</h3>
-                    <p class="text-muted" style="margin-bottom: 15px;">Your key is stored securely in this browser and never uploaded.</p>
-                    <div style="display:flex; gap:10px;">
-                        <input type="password" id="apiKeyInput" placeholder="Enter Gemini API Key" style="margin:0;">
-                        <button onclick="saveApiKey()" class="btn-primary" style="width:auto; white-space:nowrap;">Save Key</button>
-                    </div>
-                    <p id="keyStatus" class="status-msg"></p>
-                </div>
-            </section>
-
-            <section id="tab-workspace" class="tab-pane">
-                <div class="workspace-header">
-                    <button class="btn-back" onclick="switchTab('tab-dashboard')">← Back to Dashboard</button>
-                    <h2 id="ws-title">Event Workspace</h2>
-                </div>
-                <div id="workspace-content" class="workspace-grid"></div>
-            </section>
-        </main>
+    <!-- API NOTICE MODAL -->
+    <div id="api-notice-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top: 0;">API Configuration Notice</h3>
+            <div style="margin: 20px 0; text-align: left; line-height: 1.6; font-size: 14px; color: var(--text-muted);">
+                <p>You are currently utilizing the shared <strong>free-tier Gemini API</strong>. This shared resource may experience rate limiting or slower generation times.</p>
+                <p style="margin-top: 10px;">For optimal performance and unrestricted access, please configure your personal Gemini API key in the System Settings.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeApiModal()" class="btn-secondary" style="flex: 1;">Dismiss</button>
+                <button onclick="goToApiSettings()" class="btn-primary" style="flex: 1;">Configure API</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Main App Script -->
+    <!-- PREMIUM LOGIN SCREEN -->
+    <div id="login-screen" class="login-overlay">
+        <div class="login-card">
+            <div class="brand-logo">NexusPlan</div>
+            <p class="text-muted" style="margin-bottom: 25px;">Admin Workspace Portal</p>
+            
+            <div class="test-credentials">
+                <strong>Evaluation Mode Active</strong>
+                <p style="margin: 5px 0 12px 0; font-size: 12px; color: var(--text-muted); line-height: 1.4;">For testing and evaluation purposes, please use the provided staging credentials below to access the dashboard:</p>
+                <div style="background: var(--bg-main); padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
+                    User: <code>admin</code> &nbsp;|&nbsp; Pass: <code>promptwars</code>
+                </div>
+            </div>
+
+            <div id="login-form">
+                <div class="input-group">
+                    <input type="text" id="loginUser" placeholder="Username" required class="login-input">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="loginPass" placeholder="Password" required class="login-input">
+                </div>
+                <p id="loginError" style="color: var(--danger); font-size: 13px; display: none; margin: 5px 0 0 0; text-align: left;">Incorrect credentials.</p>
+                <button type="button" onclick="handleLogin()" class="btn-primary login-btn">Access Workspace</button>
+            </div>
+            
+            <div class="login-footer">
+                Need an enterprise account? <br>
+                <button onclick="openContactModal()" class="btn-text" style="margin-top: 5px;">Contact Administrator</button>
+            </div>
+            <div class="watermark-login">© 2026 Copyrighted to Subash Reddy</div>
+        </div>
+    </div>
+
+    <!-- MAIN APP DASHBOARD -->
+    <div class="app-layout" id="main-app" style="display: none;">
+        
+        <!-- TOP NAVIGATION BAR -->
+        <header class="top-navbar">
+            <div class="nav-left">
+                <button onclick="toggleSidebar()" class="hamburger-btn">☰</button>
+                <div class="brand-top">NexusPlan</div>
+            </div>
+            <div class="nav-right">
+                <div class="profile-menu-container">
+                    <button onclick="toggleDropdown(event)" class="profile-btn">
+                        <div class="avatar">A</div>
+                        Admin Workspace ▼
+                    </button>
+                    <div id="profile-dropdown" class="dropdown-menu">
+                        <button onclick="confirmLogout()" class="dropdown-item text-danger">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="app-body">
+            <!-- COLLAPSIBLE SIDEBAR -->
+            <aside id="app-sidebar" class="sidebar">
+                <nav class="nav-menu">
+                    <div class="nav-label">MAIN MENU</div>
+                    <button class="nav-btn active" onclick="switchTab('tab-dashboard')">
+                        Projects Dashboard
+                    </button>
+                    <button class="nav-btn" onclick="switchTab('tab-create')">
+                        Create New Event
+                    </button>
+                    
+                    <div class="nav-divider"></div>
+                    <div class="nav-label">SYSTEM</div>
+                    
+                    <button class="nav-btn" onclick="switchTab('tab-settings')">
+                        Settings
+                    </button>
+                    <button class="nav-btn" onclick="switchTab('tab-api')">
+                        API Configuration
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- MAIN CONTENT AREA -->
+            <main class="content-area">
+                <section id="tab-dashboard" class="tab-pane active">
+                    <header class="page-header">
+                        <h2>My Events</h2>
+                        <p>Select a project to open the workspace.</p>
+                    </header>
+                    <div id="events-grid" class="events-grid"></div>
+                </section>
+
+                <section id="tab-create" class="tab-pane">
+                    <header class="page-header">
+                        <h2>Create New Event</h2>
+                        <p>Enter parameters to generate an AI-powered foundation.</p>
+                    </header>
+                    <div class="card form-card">
+                        <form id="create-event-form">
+                            <div class="form-row">
+                                <input type="text" id="eventName" placeholder="Event Name (e.g., Annual Tech Gala)" required>
+                                <select id="eventType" required>
+                                    <option value="">Select Event Type</option>
+                                    <option value="Corporate">Corporate Event</option>
+                                    <option value="Wedding">Wedding</option>
+                                    <option value="Birthday">Birthday</option>
+                                    <option value="Community">Community Gathering</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <input type="date" id="eventDate" required>
+                                <input type="text" id="eventLocation" placeholder="Location" required>
+                            </div>
+                            <div class="form-row">
+                                <input type="number" id="guestCount" placeholder="Guest Count" required>
+                                <input type="number" id="eventBudget" placeholder="Total Budget (₹)" required>
+                            </div>
+                            <textarea id="eventPreferences" placeholder="Specific requirements or preferences..."></textarea>
+                            <button type="submit" class="btn-primary" style="margin-top: 15px;">Initialize Event Workspace</button>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="tab-settings" class="tab-pane">
+                    <header class="page-header">
+                        <h2>Settings</h2>
+                        <p>Manage your appearance and accessibility preferences.</p>
+                    </header>
+                    
+                    <div class="workspace-grid">
+                        <div class="card">
+                            <h3 style="margin-top: 0;">Appearance</h3>
+                            <p class="text-muted" style="margin-bottom: 20px;">Toggle between Light and Dark mode.</p>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="setTheme('light')" class="btn-secondary">Light Mode</button>
+                                <button onclick="setTheme('dark')" class="btn-secondary">Dark Mode</button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="margin-top: 0;">Accessibility</h3>
+                            <p class="text-muted" style="margin-bottom: 20px;">Adjust the application font size.</p>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="setFontSize('small')" class="btn-secondary">Small</button>
+                                <button onclick="setFontSize('medium')" class="btn-secondary">Medium</button>
+                                <button onclick="setFontSize('large')" class="btn-secondary">Large</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-api" class="tab-pane">
+                    <header class="page-header">
+                        <h2>API Configuration</h2>
+                        <p>Manage your Gemini AI integration.</p>
+                    </header>
+                    <div class="card">
+                        <h3 style="margin-top: 0;">Gemini AI Key</h3>
+                        <p class="text-muted" style="margin-bottom: 20px;">By default, NexusPlan uses a free-tier shared API which may experience rate limits. Provide your personal Gemini API key for instant, unthrottled generation. Your key is stored securely in this browser.</p>
+                        <div style="display:flex; gap:12px; align-items: center;">
+                            <input type="password" id="apiKeyInput" placeholder="Enter personal Gemini API Key" style="margin:0; max-width: 400px;">
+                            <button onclick="saveApiKey()" class="btn-primary" style="width:auto; white-space:nowrap;">Save API Key</button>
+                        </div>
+                        <p id="keyStatus" class="status-msg"></p>
+                    </div>
+                </section>
+
+                <section id="tab-workspace" class="tab-pane">
+                    <div class="workspace-header">
+                        <button class="btn-back" onclick="switchTab('tab-dashboard')">Back to Projects</button>
+                        <h2 id="ws-title" style="margin:0;">Workspace</h2>
+                    </div>
+                    <div id="workspace-content" class="workspace-grid"></div>
+                </section>
+
+                <!-- GLOBAL FOOTER (Always Visible) -->
+                <footer class="global-footer">
+                    © 2026 Copyrighted to Subash Reddy
+                </footer>
+            </main>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
