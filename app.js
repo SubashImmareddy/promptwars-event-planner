@@ -748,7 +748,12 @@ async function generateAIPlan(eventId) {
                 }
 
                 try {
-                    const res = await fetch('/.netlify/functions/generate-plan', {
+                   // Dynamically target the correct backend based on where the app is hosted
+                    const endpoint = window.location.hostname.includes('vercel.app') 
+                        ? '/api/generate-plan' 
+                        : '/.netlify/functions/generate-plan';
+
+                    const res = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(currentItem)
