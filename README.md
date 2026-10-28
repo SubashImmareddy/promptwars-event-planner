@@ -7,6 +7,7 @@
 NexusPlan is an enterprise-grade, hybrid AI event architecture dashboard built for the 2026 PromptWars Challenge. It bridges the gap between creative event ideation and strict logistical execution, allowing event planners to generate, manage, and export comprehensive project blueprints in seconds.
 
 **LIVE EVALUATION URL:** [https://nexusplan-ai.netlify.app/](https://nexusplan-ai.netlify.app/)
+**BACKUP EDGE URL (Vercel):** [https://nexusplan-ai.vercel.app/](https://nexusplan-ai.vercel.app/)
 
 ---
 
