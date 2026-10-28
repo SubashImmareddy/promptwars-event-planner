@@ -4,7 +4,6 @@
 let eventsData = JSON.parse(localStorage.getItem('events_backup')) || [];
 let dbClient = null;
 let budgetChartInstance = null;
-let sidebarAutoCloseTimer = null;
 
 try {
     const supabaseUrl = 'https://gbkqhyfynkhsumcreoqw.supabase.co';
@@ -56,14 +55,13 @@ function showToastNotice(message) {
 }
 
 // ==========================================
-// 2. AUTH, SMART SIDEBAR & LOGOUT
+// 2. AUTH, SIDEBAR (STATIC DESKTOP / AUTO-CLOSE MOBILE) & LOGOUT
 // ==========================================
 function checkLoginState() {
     if (localStorage.getItem('nova_admin_auth') === 'true') {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'flex';
         syncDatabase();
-        scheduleSidebarAutoClose(3500);
     }
 }
 
@@ -78,7 +76,6 @@ function handleLogin() {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'flex';
         syncDatabase();
-        scheduleSidebarAutoClose(3500);
 
         if (!localStorage.getItem('geminiApiKey') && !sessionStorage.getItem('apiPromptShown')) {
             setTimeout(function() {
@@ -102,82 +99,46 @@ function executeLogout() {
     window.location.reload();
 }
 
-// Smart Sidebar Controls (Toggle, Auto-Idle Close, Left-Edge Hover & Click-Outside)
-function openSidebar() {
-    const sidebar = document.getElementById('app-sidebar');
-    if (!sidebar) return;
-    sidebar.classList.remove('collapsed');
-    scheduleSidebarAutoClose(3500);
-}
-
-function closeSidebar() {
-    const sidebar = document.getElementById('app-sidebar');
-    if (!sidebar) return;
-    sidebar.classList.add('collapsed');
-    clearSidebarAutoClose();
-}
-
+// ------------------------------------------
+// ENTERPRISE SIDEBAR UX (STATIC DESKTOP / AUTO-CLOSE MOBILE)
+// ------------------------------------------
 function toggleSidebar() {
     const sidebar = document.getElementById('app-sidebar');
-    if (!sidebar) return;
-    if (sidebar.classList.contains('collapsed')) {
-        openSidebar();
-    } else {
-        closeSidebar();
-    }
+    if (sidebar) sidebar.classList.toggle('collapsed');
 }
 
-function clearSidebarAutoClose() {
-    if (sidebarAutoCloseTimer) {
-        clearTimeout(sidebarAutoCloseTimer);
-        sidebarAutoCloseTimer = null;
-    }
-}
-
-function scheduleSidebarAutoClose(delayMs) {
-    clearSidebarAutoClose();
-    sidebarAutoCloseTimer = setTimeout(function() {
-        const sidebar = document.getElementById('app-sidebar');
-        if (sidebar && !sidebar.matches(':hover')) {
-            sidebar.classList.add('collapsed');
-        }
-    }, delayMs || 3500);
-}
-
-function initSmartSidebar() {
+function initResponsiveSidebar() {
     const sidebar = document.getElementById('app-sidebar');
     const hamburger = document.querySelector('.hamburger-btn');
     if (!sidebar) return;
 
-    // 1. Keep open while mouse is inside sidebar; start auto-close timer when mouse leaves
-    sidebar.addEventListener('mouseenter', function() {
-        clearSidebarAutoClose();
-    });
-    sidebar.addEventListener('mouseleave', function() {
-        scheduleSidebarAutoClose(1800);
-    });
+    // On mobile screens (<= 768px), start collapsed so content is visible; on desktop (> 768px), keep open
+    if (window.innerWidth <= 768) {
+        sidebar.classList.add('collapsed');
+    } else {
+        sidebar.classList.remove('collapsed');
+    }
 
-    // 2. Swipe / Move mouse to the left edge of the screen (<= 18px) to auto-open sidebar
-    document.addEventListener('mousemove', function(e) {
-        const mainApp = document.getElementById('main-app');
-        if (!mainApp || mainApp.style.display === 'none') return;
-        if (e.clientX <= 18 && sidebar.classList.contains('collapsed')) {
-            openSidebar();
+    // Mobile Only: Click anywhere outside the sidebar to close it
+    document.addEventListener('click', function(event) {
+        if (window.innerWidth > 768) return; // Do nothing on desktop/laptop!
+
+        const isClickInsideSidebar = sidebar.contains(event.target);
+        const isClickOnHamburger = hamburger && hamburger.contains(event.target);
+        const isSidebarOpen = !sidebar.classList.contains('collapsed');
+
+        if (isSidebarOpen && !isClickInsideSidebar && !isClickOnHamburger) {
+            sidebar.classList.add('collapsed');
         }
     });
 
-    // 3. Click anywhere outside the sidebar (on main workspace) to close it immediately
-    document.addEventListener('click', function(e) {
-        const mainApp = document.getElementById('main-app');
-        if (!mainApp || mainApp.style.display === 'none') return;
-        if (sidebar.classList.contains('collapsed')) return;
-
-        const clickedInsideSidebar = sidebar.contains(e.target);
-        const clickedHamburger = hamburger && hamburger.contains(e.target);
-
-        if (!clickedInsideSidebar && !clickedHamburger) {
-            closeSidebar();
-        }
+    // Mobile Only: Auto-close the sidebar as soon as a menu link is clicked
+    document.querySelectorAll('.nav-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('collapsed');
+            }
+        });
     });
 }
 
@@ -215,7 +176,7 @@ function goToApiSettings() {
 
 document.addEventListener('DOMContentLoaded', function() {
     checkLoginState();
-    initSmartSidebar();
+    initResponsiveSidebar();
     refreshApiKeyUI();
 
     const passInput = document.getElementById('loginPass');
@@ -252,7 +213,7 @@ function refreshApiKeyUI() {
     const removeBtn = document.getElementById('removeKeyBtn');
     const statusText = document.getElementById('keyStatus');
 
-    // Always keep the Reset to Default button visible so the user can reset at any time
+    // Always keep the Reset to Default button visible
     if (removeBtn) {
         removeBtn.style.display = 'inline-block';
     }
@@ -286,7 +247,6 @@ async function saveApiKey() {
         return;
     }
 
-    // Basic format sanity check (Google API keys start with AIza and are ~39 chars)
     if (keyInput.length < 25) {
         statusText.textContent = "Invalid API Key format. Key rejected — staying on Shared Edge Network default.";
         statusText.style.color = "var(--danger)";
@@ -422,12 +382,14 @@ function switchTab(tabId) {
     if (tabId === 'tab-dashboard') renderDashboard();
     if (tabId === 'tab-api') refreshApiKeyUI();
 
-    // Scroll content area back to top cleanly when switching tabs
     const contentArea = document.querySelector('.content-area');
     if (contentArea) contentArea.scrollTop = 0;
 
-    // Auto-collapse sidebar after selecting a menu item so workspace has full screen width
-    closeSidebar();
+    // Only auto-close sidebar on mobile screens; leave it open on desktop/laptop
+    if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('app-sidebar');
+        if (sidebar) sidebar.classList.add('collapsed');
+    }
 }
 
 const createForm = document.getElementById('create-event-form');
