@@ -226,3 +226,184 @@ ul.checklist li:last-child { border-bottom: none; }
     display: flex; gap: 15px; align-items: center; z-index: 10000; animation: slideInUp 0.4s ease forwards;
 }
 @keyframes slideInUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+/* ==========================================================================
+   ENTERPRISE THEME ENGINE OVERHAUL (LIGHT & DARK MODE)
+    Guaranteed zero-layout-breakage drop-in replacement
+   ========================================================================== */
+
+:root {
+    /* Crisp Enterprise Light Theme (Default) */
+    --bg-main: #F8FAFC;
+    --bg-body: #F8FAFC;
+    --bg-card: #FFFFFF;
+    --bg-surface: #F1F5F9;
+    --bg-input: #FFFFFF;
+    --bg-sidebar: #FFFFFF;
+    
+    --text-main: #0F172A;
+    --text-primary: #0F172A;
+    --text-muted: #64748B;
+    --text-secondary: #475569;
+    
+    --border: #E2E8F0;
+    --border-color: #E2E8F0;
+    
+    --primary: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-light: rgba(79, 70, 229, 0.1);
+    --accent-text: #4F46E5;
+    
+    --danger: #EF4444;
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    --success: #10B981;
+    
+    --card-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+/* Support all common Dark Mode triggers (body.dark-mode, body.dark, [data-theme="dark"]) */
+body.dark-mode,
+body.dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+    /* Rich Slate-Navy Hierarchy (No more flat #000000 black) */
+    --bg-main: #090D16;        /* Deepest obsidian-navy background */
+    --bg-body: #090D16;
+    --bg-card: #111827;        /* Elevated slate card surface */
+    --bg-surface: #1E293B;     /* Secondary inner boxes & callouts */
+    --bg-input: #0F172A;       /* Recessed input fields */
+    --bg-sidebar: #0D131F;     /* Distinct sidebar surface */
+    
+    --text-main: #F8FAFC;      /* Crisp off-white primary text */
+    --text-primary: #F8FAFC;
+    --text-muted: #94A3B8;     /* Highly legible cool-grey muted text */
+    --text-secondary: #CBD5E1;
+    
+    --border: #1E293B;         /* Subtle slate border */
+    --border-color: #1E293B;
+    
+    --primary: #6366F1;        /* Vibrant Electric Indigo for buttons */
+    --primary-hover: #818CF8;
+    --primary-light: rgba(99, 102, 241, 0.16);
+    --accent-text: #818CF8;    /* Luminous indigo for dark-mode links & badges */
+    
+    --danger: #F87171;
+    --danger-bg: rgba(248, 113, 113, 0.15);
+    --success: #34D399;
+    
+    --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    color-scheme: dark;
+}
+
+/* ==========================================================================
+   DARK MODE SURFACE & CONTRAST FIXES (LOGIN, INPUTS, BADGES & LOGO)
+   ========================================================================== */
+
+/* 1. Base Body & Card Surfaces */
+body.dark-mode,
+body.dark,
+body[data-theme="dark"] {
+    background-color: var(--bg-main) !important;
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .login-card,
+body.dark-mode .card,
+body.dark-mode .workspace-card,
+body.dark-mode .modal-content,
+body[data-theme="dark"] .login-card,
+body[data-theme="dark"] .card {
+    background-color: var(--bg-card) !important;
+    border: 1px solid #1E293B !important;
+    box-shadow: var(--card-shadow) !important;
+}
+
+/* 2. Fix the glaring white Logo Box in Dark Mode */
+body.dark-mode .login-card img,
+body.dark-mode .logo-container img,
+body[data-theme="dark"] .login-card img {
+    background-color: #FFFFFF;
+    padding: 10px 18px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+    max-height: 64px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* 3. Fix "Evaluation Mode Active" Box & Code Badges */
+body.dark-mode code,
+body[data-theme="dark"] code {
+    background-color: rgba(99, 102, 241, 0.18) !important;
+    color: #A5B4FC !important; /* Bright lavender-indigo so 'admin' and 'promptwars' pop */
+    border: 1px solid rgba(129, 140, 248, 0.3) !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+}
+
+/* 4. Fix Input Fields, Selects & Textareas in Dark Mode */
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea,
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea {
+    background-color: var(--bg-input) !important;
+    color: var(--text-main) !important;
+    border: 1px solid #334155 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder,
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+    color: #64748B !important;
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus,
+body[data-theme="dark"] input:focus,
+body[data-theme="dark"] select:focus,
+body[data-theme="dark"] textarea:focus {
+    border-color: #6366F1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+    outline: none !important;
+}
+
+/* 5. Fix Dark-Blue Unreadable Links ("Contact Administrator") */
+body.dark-mode a,
+body[data-theme="dark"] a {
+    color: var(--accent-text) !important;
+}
+
+body.dark-mode a:hover,
+body[data-theme="dark"] a:hover {
+    color: #A5B4FC !important;
+}
+
+/* 6. Fix Danger / Remove Buttons so they look sleek in both themes */
+.btn-danger {
+    background-color: var(--danger-bg) !important;
+    color: var(--danger) !important;
+    border: 1px solid rgba(239, 68, 68, 0.25) !important;
+    padding: 5px 12px !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-danger:hover {
+    background-color: var(--danger) !important;
+    color: #FFFFFF !important;
+}
+
+/* 7. Fix Chrome Autofill turning inputs bright yellow/white in Dark Mode */
+body.dark-mode input:-webkit-autofill,
+body[data-theme="dark"] input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px #0F172A inset !important;
+    -webkit-text-fill-color: #F8FAFC !important;
+    caret-color: #F8FAFC !important;
+}

@@ -6,23 +6,23 @@
 
 NexusPlan is an enterprise-grade, hybrid AI event architecture dashboard built for the 2026 PromptWars Challenge. It bridges the gap between creative event ideation and strict logistical execution, allowing event planners to generate, manage, and export comprehensive project blueprints in seconds.
 
-**LIVE EVALUATION URL:** [https://nexusplan-ai.netlify.app/](https://nexusplan-ai.netlify.app/)
+**PRIMARY LIVE EVALUATION URL (Vercel):** [https://nexusplan-ai.vercel.app/](https://nexusplan-ai.vercel.app/)
 
-**BACKUP EDGE URL (Vercel):** [https://nexusplan-ai.vercel.app/](https://nexusplan-ai.vercel.app/)
+**BACKUP EDGE URL (Netlify):** [https://nexusplan-ai.netlify.app/](https://nexusplan-ai.netlify.app/)
 
 ---
 
 ## PromptWars Evaluation Guide (For Judges)
 
-Welcome to my submission! There is no need to clone this repository or run local servers. The application is fully deployed and production-ready on the edge.
+Welcome to my submission! There is no need to clone this repository or run local servers. The application is fully deployed and production-ready on the Vercel edge network, with secondary cross-platform redundancy on Netlify.
 
 To evaluate this application instantly:
-1. **Access the Portal**: Click the live URL above.
+1. **Access the Portal**: Click the primary Vercel live URL above.
 2. **Bypass the Gatekeeper**: Use the built-in staging credentials to enter the admin dashboard:
    * **Username:** `admin`
    * **Password:** `promptwars`
 3. **Generate an Event**: Click "Create New Event" in the sidebar, enter your parameters (e.g., a Corporate Summit in Hyderabad with a ₹150,000 budget), and click "Initialize Event Workspace."
-4. **The Hackathon Fail-Safe**: NexusPlan is built to survive heavy judging traffic. If the shared free-tier Netlify backend hits its standard 10-second timeout limit, the system will automatically intercept the error and inject a perfectly scaled, localized 4-Phase Demo Plan. You will never be left staring at a loading screen or a broken UI.
+4. **The Hackathon Fail-Safe & Auto-Retry**: NexusPlan is built to survive heavy judging traffic. The Vercel serverless backend features a multi-model failover queue that automatically reroutes requests across Gemini Flash models if the primary model is experiencing high demand. Furthermore, if the shared free-tier serverless backend hits a strict execution timeout, the system automatically intercepts the error and injects a perfectly scaled, localized 4-Phase Demo Plan. You will never be left staring at a loading screen or a broken UI.
 
 ---
 
@@ -40,7 +40,7 @@ V1 focused on building a secure, accessible, and beautiful UI framework.
 ### Version 2.0: The "Architect" Upgrade (Current)
 V2 transformed the static dashboard into an autonomous AI planning engine.
 * **Strict JSON Automation:** I upgraded the Gemini prompt to output strict JSON data. The system now autonomously parses AI responses to instantly inject structured expenses and task arrays directly into the application state.
-* **Smart Model Auto-Discovery:** Instead of hardcoding AI endpoints that might deprecate, the system dynamically scans the Google API for available models and prioritizes the newest and fastest (`gemini-3.8-flash`), falling back automatically if needed.
+* **Smart Model Auto-Discovery & Failover:** Instead of hardcoding a single AI endpoint that might deprecate or experience traffic spikes, the system dynamically scans and routes requests through a priority queue of Google Gemini Flash models, falling back automatically if needed.
 * **Interactive Financials:** A live, dynamic Chart.js doughnut chart visually calculates allocated funds, spent budget, and overage warnings in real-time as expenses are generated or manually added.
 * **4-Phase Timeline Architecture:** The AI now mathematically groups tasks chronologically into Phase 1 (Foundation), Phase 2 (Vendor Lock-in), Phase 3 (Final Prep), and Phase 4 (Execution), replacing overwhelming generic to-do lists.
 * **Executive PDF Export:** A one-click generation tool that compiles the AI strategy, budget breakdown, and 4-phase checklist into a clean, printable PDF report ready to be handed to clients.
@@ -61,8 +61,8 @@ In the real-world event management industry, planners waste hours bridging the g
 * **Frontend:** HTML5, CSS3 (Custom Variables, Flexbox/Grid), Vanilla JavaScript (ES6+)
 * **Visualization:** Chart.js (Dynamic canvas rendering)
 * **Backend / Database:** Supabase (PostgreSQL) & LocalStorage (Offline redundancy)
-* **AI Engine:** Google Gemini AI API (`gemini-3.8-flash` via REST)
-* **Deployment:** Netlify (Edge deployment & Serverless fallback functions)
+* **AI Engine:** Google Gemini AI API (Multi-model Flash failover via REST)
+* **Deployment:** Vercel (Primary Edge Network & Serverless Functions) with Netlify Backup Redundancy
 
 ---
 *Designed and engineered by Subash Reddy for the 2026 PromptWars Challenge.*
