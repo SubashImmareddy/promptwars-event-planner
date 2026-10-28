@@ -4,6 +4,7 @@
 let eventsData = JSON.parse(localStorage.getItem('events_backup')) || [];
 let dbClient = null;
 let budgetChartInstance = null;
+let sidebarAutoCloseTimer = null;
 
 try {
     const supabaseUrl = 'https://gbkqhyfynkhsumcreoqw.supabase.co';
@@ -55,13 +56,14 @@ function showToastNotice(message) {
 }
 
 // ==========================================
-// 2. AUTH, LAYOUT TOGGLES & LOGOUT
+// 2. AUTH, SMART SIDEBAR & LOGOUT
 // ==========================================
 function checkLoginState() {
     if (localStorage.getItem('nova_admin_auth') === 'true') {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'flex';
         syncDatabase();
+        scheduleSidebarAutoClose(3500);
     }
 }
 
@@ -76,6 +78,7 @@ function handleLogin() {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-app').style.display = 'flex';
         syncDatabase();
+        scheduleSidebarAutoClose(3500);
 
         if (!localStorage.getItem('geminiApiKey') && !sessionStorage.getItem('apiPromptShown')) {
             setTimeout(function() {
@@ -99,9 +102,83 @@ function executeLogout() {
     window.location.reload();
 }
 
+// Smart Sidebar Controls (Toggle, Auto-Idle Close, Left-Edge Hover & Click-Outside)
+function openSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    if (!sidebar) return;
+    sidebar.classList.remove('collapsed');
+    scheduleSidebarAutoClose(3500);
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    if (!sidebar) return;
+    sidebar.classList.add('collapsed');
+    clearSidebarAutoClose();
+}
+
 function toggleSidebar() {
     const sidebar = document.getElementById('app-sidebar');
-    sidebar.classList.toggle('collapsed');
+    if (!sidebar) return;
+    if (sidebar.classList.contains('collapsed')) {
+        openSidebar();
+    } else {
+        closeSidebar();
+    }
+}
+
+function clearSidebarAutoClose() {
+    if (sidebarAutoCloseTimer) {
+        clearTimeout(sidebarAutoCloseTimer);
+        sidebarAutoCloseTimer = null;
+    }
+}
+
+function scheduleSidebarAutoClose(delayMs) {
+    clearSidebarAutoClose();
+    sidebarAutoCloseTimer = setTimeout(function() {
+        const sidebar = document.getElementById('app-sidebar');
+        if (sidebar && !sidebar.matches(':hover')) {
+            sidebar.classList.add('collapsed');
+        }
+    }, delayMs || 3500);
+}
+
+function initSmartSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    const hamburger = document.querySelector('.hamburger-btn');
+    if (!sidebar) return;
+
+    // 1. Keep open while mouse is inside sidebar; start auto-close timer when mouse leaves
+    sidebar.addEventListener('mouseenter', function() {
+        clearSidebarAutoClose();
+    });
+    sidebar.addEventListener('mouseleave', function() {
+        scheduleSidebarAutoClose(1800);
+    });
+
+    // 2. Swipe / Move mouse to the left edge of the screen (<= 18px) to auto-open sidebar
+    document.addEventListener('mousemove', function(e) {
+        const mainApp = document.getElementById('main-app');
+        if (!mainApp || mainApp.style.display === 'none') return;
+        if (e.clientX <= 18 && sidebar.classList.contains('collapsed')) {
+            openSidebar();
+        }
+    });
+
+    // 3. Click anywhere outside the sidebar (on main workspace) to close it immediately
+    document.addEventListener('click', function(e) {
+        const mainApp = document.getElementById('main-app');
+        if (!mainApp || mainApp.style.display === 'none') return;
+        if (sidebar.classList.contains('collapsed')) return;
+
+        const clickedInsideSidebar = sidebar.contains(e.target);
+        const clickedHamburger = hamburger && hamburger.contains(e.target);
+
+        if (!clickedInsideSidebar && !clickedHamburger) {
+            closeSidebar();
+        }
+    });
 }
 
 function toggleDropdown(e) {
@@ -126,7 +203,7 @@ function closeContactModal() {
 }
 
 // ==========================================
-// 3. API NOTIFICATION MODAL
+// 3. API NOTIFICATION MODAL & INITIALIZATION
 // ==========================================
 function closeApiModal() {
     document.getElementById('api-notice-modal').style.display = 'none';
@@ -138,6 +215,9 @@ function goToApiSettings() {
 
 document.addEventListener('DOMContentLoaded', function() {
     checkLoginState();
+    initSmartSidebar();
+    refreshApiKeyUI();
+
     const passInput = document.getElementById('loginPass');
     const userInput = document.getElementById('loginUser');
     [userInput, passInput].forEach(function(input) {
@@ -153,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ==========================================
-// 4. SETTINGS & ACCESSIBILITY
+// 4. SETTINGS, ACCESSIBILITY & API KEY RESET
 // ==========================================
 function setTheme(mode) {
     document.body.setAttribute('data-theme', mode);
@@ -166,19 +246,86 @@ function setFontSize(size) {
     localStorage.setItem('fontSize', size);
 }
 
-function saveApiKey() {
-    const keyInput = document.getElementById('apiKeyInput');
-    const key = keyInput ? keyInput.value.trim() : '';
-    if (key) {
-        localStorage.setItem('geminiApiKey', key);
-        document.getElementById('keyStatus').innerText = "Personal API Key saved and active.";
-        keyInput.value = '';
+function refreshApiKeyUI() {
+    const savedKey = localStorage.getItem('geminiApiKey');
+    const inputField = document.getElementById('apiKeyInput');
+    const removeBtn = document.getElementById('removeKeyBtn');
+    const statusText = document.getElementById('keyStatus');
+
+    // Always keep the Reset to Default button visible so the user can reset at any time
+    if (removeBtn) {
+        removeBtn.style.display = 'inline-block';
+    }
+
+    if (savedKey) {
+        if (inputField) inputField.value = savedKey;
+        if (statusText) {
+            statusText.textContent = "Active Mode: Personal Gemini API Key is saved and active.";
+            statusText.style.color = "var(--success)";
+        }
+    } else {
+        if (inputField) inputField.value = '';
+        if (statusText) {
+            statusText.textContent = "Active Mode: Shared Edge Network Default (No personal key set).";
+            statusText.style.color = "var(--text-muted)";
+        }
     }
 }
 
-if (localStorage.getItem('geminiApiKey')) {
-    const statusEl = document.getElementById('keyStatus');
-    if (statusEl) statusEl.innerText = "Personal API Key is active.";
+async function saveApiKey() {
+    const inputEl = document.getElementById('apiKeyInput');
+    const keyInput = inputEl ? inputEl.value.trim() : '';
+    const statusText = document.getElementById('keyStatus');
+    const removeBtn = document.getElementById('removeKeyBtn');
+
+    if (removeBtn) removeBtn.style.display = 'inline-block';
+
+    if (!keyInput) {
+        statusText.textContent = "Please enter a valid Gemini API key before saving, or click Reset to Default.";
+        statusText.style.color = "var(--danger)";
+        return;
+    }
+
+    // Basic format sanity check (Google API keys start with AIza and are ~39 chars)
+    if (keyInput.length < 25) {
+        statusText.textContent = "Invalid API Key format. Key rejected — staying on Shared Edge Network default.";
+        statusText.style.color = "var(--danger)";
+        return;
+    }
+
+    statusText.textContent = "Validating key with Google Gemini servers...";
+    statusText.style.color = "var(--text-muted)";
+
+    try {
+        const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(keyInput));
+        const data = await res.json();
+
+        if (!res.ok || data.error || !data.models) {
+            throw new Error((data.error && data.error.message) || "Invalid API key");
+        }
+
+        localStorage.setItem('geminiApiKey', keyInput);
+        statusText.textContent = "Valid API Key verified and saved! Dedicated generation is now active.";
+        statusText.style.color = "var(--success)";
+        showToastNotice("Personal Gemini API Key verified and activated.");
+    } catch (err) {
+        localStorage.removeItem('geminiApiKey');
+        statusText.textContent = "Invalid API Key rejected. System remains on Shared Edge Network default.";
+        statusText.style.color = "var(--danger)";
+    }
+}
+
+function removeApiKey() {
+    localStorage.removeItem('geminiApiKey');
+    const inputEl = document.getElementById('apiKeyInput');
+    if (inputEl) inputEl.value = '';
+
+    const statusText = document.getElementById('keyStatus');
+    if (statusText) {
+        statusText.textContent = "Reset complete. System reverted to Shared Edge Network Default.";
+        statusText.style.color = "var(--text-muted)";
+    }
+    showToastNotice("API configuration reset to default shared server.");
 }
 
 // ==========================================
@@ -242,7 +389,7 @@ function renderDashboard() {
             '<div onclick="openWorkspace(' + item.id + ')">',
             '<h3 style="margin:0 0 8px 0; padding-right: 70px; font-weight: 600;">' + item.name + '</h3>',
             '<p class="text-muted" style="margin:0 0 15px 0;">' + item.type + ' | ' + item.date + '</p>',
-            '<div style="display: inline-block; background: rgba(79, 70, 229, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">',
+            '<div style="display: inline-block; background: var(--primary-light); color: var(--accent-text); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">',
             'Due: ' + daysBadge,
             '</div>',
             '</div>',
@@ -271,7 +418,16 @@ function switchTab(tabId) {
         });
         if (activeBtn) activeBtn.classList.add('active');
     }
+
     if (tabId === 'tab-dashboard') renderDashboard();
+    if (tabId === 'tab-api') refreshApiKeyUI();
+
+    // Scroll content area back to top cleanly when switching tabs
+    const contentArea = document.querySelector('.content-area');
+    if (contentArea) contentArea.scrollTop = 0;
+
+    // Auto-collapse sidebar after selecting a menu item so workspace has full screen width
+    closeSidebar();
 }
 
 const createForm = document.getElementById('create-event-form');
@@ -331,7 +487,7 @@ function openWorkspace(eventId) {
         ? '<span style="color:var(--danger); font-weight:bold;">(Over Budget)</span>'
         : '';
 
-const expensesHTML = currentItem.expenses
+    const expensesHTML = currentItem.expenses
         ? currentItem.expenses.map(function(exp, i) {
             return [
                 '<li style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">',
@@ -345,7 +501,6 @@ const expensesHTML = currentItem.expenses
         }).join('')
         : '';
 
-    // V2: Group tasks by their AI-assigned Phase (1 through 4)
     let tasksHTML = '';
     if (currentItem.tasks && currentItem.tasks.length > 0) {
         const phases = [1, 2, 3, 4];
@@ -369,7 +524,7 @@ const expensesHTML = currentItem.expenses
                 });
 
             if (phaseTasks.length > 0) {
-                tasksHTML += '<h4 style="margin: 15px 0 5px 0; color: var(--primary); font-size: 13px; text-transform: uppercase;">' + phaseNames[index] + '</h4>';
+                tasksHTML += '<h4 style="margin: 15px 0 5px 0; color: var(--accent-text); font-size: 13px; text-transform: uppercase;">' + phaseNames[index] + '</h4>';
                 phaseTasks.forEach(function(task) {
                     const lineStyle = task.done ? 'line-through' : 'none';
                     const opacityStyle = task.done ? '0.5' : '1';
@@ -386,7 +541,6 @@ const expensesHTML = currentItem.expenses
             }
         });
 
-        // Catch any tasks without a phase (manual additions or older tasks)
         const unphasedTasks = currentItem.tasks
             .map(function(t, i) {
                 const taskName = (typeof t === 'object' && t !== null) ? t.name : String(t);
@@ -399,7 +553,7 @@ const expensesHTML = currentItem.expenses
             });
 
         if (unphasedTasks.length > 0) {
-            tasksHTML += '<h4 style="margin: 15px 0 5px 0; color: var(--primary); font-size: 13px; text-transform: uppercase;">General Tasks</h4>';
+            tasksHTML += '<h4 style="margin: 15px 0 5px 0; color: var(--accent-text); font-size: 13px; text-transform: uppercase;">General Tasks</h4>';
             unphasedTasks.forEach(function(task) {
                 const lineStyle = task.done ? 'line-through' : 'none';
                 const opacityStyle = task.done ? '0.5' : '1';
@@ -479,7 +633,6 @@ const expensesHTML = currentItem.expenses
     renderBudgetChart(currentItem, spent, remaining);
 }
 
-// Chart Rendering Logic
 function renderBudgetChart(currentItem, spent, remaining) {
     const ctx = document.getElementById('budgetChart-' + currentItem.id);
     if (!ctx) return;
@@ -495,7 +648,7 @@ function renderBudgetChart(currentItem, spent, remaining) {
             labels: ['Spent', 'Remaining', overage > 0 ? 'Over Budget' : ''],
             datasets: [{
                 data: [spent, validRemaining, overage],
-                backgroundColor: ['#4F46E5', '#E5E7EB', '#EF4444'],
+                backgroundColor: ['#6366F1', '#334155', '#EF4444'],
                 borderWidth: 0,
                 cutout: '75%'
             }]
@@ -659,7 +812,6 @@ async function generateAIPlan(eventId) {
         let activeModel = "Serverless Engine";
 
         if (localKey) {
-            // Discover all valid flash models and build a priority failover list
             let candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
             try {
                 const modelRes = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + localKey);
@@ -718,7 +870,7 @@ async function generateAIPlan(eventId) {
 
                     if (!textCandidate) throw new Error("Empty response from " + tryModel);
                     rawOutput = textCandidate;
-                    break; // Success! Exit the retry loop
+                    break;
                 } catch (attemptErr) {
                     lastErr = attemptErr;
                     console.warn("Model " + tryModel + " busy or failed:", attemptErr.message);
@@ -728,7 +880,6 @@ async function generateAIPlan(eventId) {
             if (!rawOutput && lastErr) throw lastErr;
 
         } else {
-            // Shared Netlify Serverless Endpoint with 2 automatic retries
             const maxAttempts = 2;
             let lastServerErr = null;
 
@@ -739,7 +890,7 @@ async function generateAIPlan(eventId) {
                         '<strong>Shared AI server is busy (high traffic). Automatically retrying (Attempt ' + attempt + ' of ' + maxAttempts + ')...</strong>',
                         '<p style="margin:8px 0 0 0; font-size:13px; color:var(--text-muted);">',
                         'Tip: If you have your own Gemini API key, ',
-                        '<a href="javascript:void(0)" onclick="switchTab(\'tab-api\')" style="color:var(--primary); text-decoration:underline; font-weight:600;">click here to add it in API Configuration</a> ',
+                        '<a href="javascript:void(0)" onclick="switchTab(\'tab-api\')" style="color:var(--accent-text); text-decoration:underline; font-weight:600;">click here to add it in API Configuration</a> ',
                         'for dedicated, zero-wait access.',
                         '</p>',
                         '</div>'
@@ -748,9 +899,8 @@ async function generateAIPlan(eventId) {
                 }
 
                 try {
-                   // Dynamically target the correct backend based on where the app is hosted
-                    const endpoint = window.location.hostname.includes('vercel.app') 
-                        ? '/api/generate-plan' 
+                    const endpoint = window.location.hostname.includes('vercel.app')
+                        ? '/api/generate-plan'
                         : '/.netlify/functions/generate-plan';
 
                     const res = await fetch(endpoint, {
@@ -762,7 +912,7 @@ async function generateAIPlan(eventId) {
                     if (data.error && !data.plan) throw new Error(data.error);
                     if (!data.plan) throw new Error("Empty plan returned from server.");
                     rawOutput = data.plan;
-                    break; // Success!
+                    break;
                 } catch (serverErr) {
                     lastServerErr = serverErr;
                     console.warn("Serverless attempt " + attempt + " failed:", serverErr.message);
@@ -774,7 +924,6 @@ async function generateAIPlan(eventId) {
 
         if (!rawOutput) throw new Error("AI service returned an empty response after retries.");
 
-        // Clean any markdown wrappers safely
         const fence = String.fromCharCode(96, 96, 96);
         rawOutput = String(rawOutput).split(fence + 'json').join('').split(fence + 'html').join('').split(fence).join('').trim();
 
@@ -814,14 +963,13 @@ async function generateAIPlan(eventId) {
     } catch (err) {
         console.warn("All live AI retries busy. Activating resilient backup blueprint:", err);
 
-        // If every retry is still overloaded, load a contextual plan + clear notice prompting for a custom API key
         const demoSummary = [
             '<h3>Creative Strategy: ' + currentItem.name + '</h3>',
             '<p>Curating a high-impact ' + currentItem.type + ' in ' + currentItem.location + ' tailored for ' + currentItem.guests + ' guests. ',
             'Every logistical milestone and vendor allocation below is calibrated to maximize experience quality within your Rs. ' + currentItem.budget.toLocaleString() + ' budget.</p>',
-            '<div style="margin-top:12px; padding:10px 14px; background:rgba(79, 70, 229, 0.08); border-left:3px solid var(--primary); border-radius:6px; font-size:13px;">',
+            '<div style="margin-top:12px; padding:10px 14px; background:var(--primary-light); border-left:3px solid var(--primary); border-radius:6px; font-size:13px;">',
             '<strong>Note:</strong> The public AI model is currently experiencing high demand. We have initialized a smart baseline blueprint for your event. ',
-            'Have your own Gemini API key? <a href="javascript:void(0)" onclick="switchTab(\'tab-api\')" style="color:var(--primary); font-weight:600; text-decoration:underline;">Add it in API Configuration</a> and click Generate Plan again for dedicated AI generation.',
+            'Have your own Gemini API key? <a href="javascript:void(0)" onclick="switchTab(\'tab-api\')" style="color:var(--accent-text); font-weight:600; text-decoration:underline;">Add it in API Configuration</a> and click Generate Plan again for dedicated AI generation.',
             '</div>'
         ].join('');
 

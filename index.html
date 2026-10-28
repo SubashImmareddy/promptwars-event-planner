@@ -210,20 +210,21 @@
                 </section>
 
                 <section id="tab-api" class="tab-pane">
-                    <header class="page-header">
-                        <h2>API Configuration</h2>
-                        <p>Manage your Gemini AI integration.</p>
-                    </header>
-                    <div class="card">
-                        <h3 style="margin-top: 0;">Gemini AI Key</h3>
-                        <p class="text-muted" style="margin-bottom: 20px;">By default, NexusPlan uses a free-tier shared API which may experience rate limits. Provide your personal Gemini API key for instant, unthrottled generation. Your key is stored securely in this browser.</p>
-                        <div style="display:flex; gap:12px; align-items: center;">
-                            <input type="password" id="apiKeyInput" placeholder="Enter personal Gemini API Key" style="margin:0; max-width: 400px;">
-                            <button onclick="saveApiKey()" class="btn-primary" style="width:auto; white-space:nowrap;">Save API Key</button>
-                        </div>
-                        <p id="keyStatus" class="status-msg"></p>
-                    </div>
-                </section>
+    <header class="page-header">
+        <h2>API Configuration</h2>
+        <p>Manage your Gemini AI integration.</p>
+    </header>
+    <div class="card">
+        <h3 style="margin-top: 0;">Gemini AI Key</h3>
+        <p class="text-muted" style="margin-bottom: 20px;">By default, NexusPlan uses a free-tier shared API which may experience rate limits. Provide your personal Gemini API key for instant, unthrottled generation. Your key is stored securely in this browser.</p>
+        <div style="display:flex; gap:12px; align-items: center;">
+            <input type="password" id="apiKeyInput" placeholder="Enter personal Gemini API Key" style="margin:0; flex: 1; max-width: 400px; padding: 10px; border-radius: 6px;">
+            <button onclick="saveApiKey()" class="btn-primary" style="width:auto; white-space:nowrap;">Save API Key</button>
+            <button onclick="removeApiKey()" id="removeKeyBtn" class="btn-danger" style="display: none; width:auto; white-space:nowrap;">Reset to Default</button>
+        </div>
+        <p id="keyStatus" class="status-msg" style="margin-top: 10px; font-size: 13px; font-weight: 500;"></p>
+    </div>
+</section>
 
                 <section id="tab-workspace" class="tab-pane">
                     <div class="workspace-header">
