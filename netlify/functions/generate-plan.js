@@ -10,25 +10,33 @@ exports.handler = async function(event, context) {
         if (!apiKey) throw new Error("API Key missing on Netlify server.");
 
         const budgetNum = Number(body.budget) || 100000;
+        const userPrefs = (body.preferences && String(body.preferences).trim())
+            ? String(body.preferences).trim()
+            : 'Standard high-impact execution and guest experience';
+
         const prompt = [
             'Act as a premium event architect. Plan a ' + body.type + ' named "' + body.name + '".',
-            'Location: ' + body.location + '. Guests: ' + body.guests + '. Budget: Rs. ' + budgetNum + '. Preferences: ' + body.preferences + '.',
+            'Location: ' + body.location + '. Guests: ' + body.guests + '. Budget: Rs. ' + budgetNum + '.',
+            'CLIENT PREFERENCES & SPECIFIC REQUIREMENTS: "' + userPrefs + '".',
+            'CRITICAL INSTRUCTION: You MUST heavily customize the specific names of your generated expenses, tasks, and strategy summary so they directly reflect the CLIENT PREFERENCES above. Explicitly mention their specific requests in the expense names and task descriptions. Do NOT output generic placeholder names.',
             'You MUST respond strictly in valid JSON format. Do not include markdown codeblocks.',
-            'Structure the JSON exactly like this, ensuring every task is an object with "name" and "phase" (integer 1 to 4):',
+            'Structure the JSON exactly like this schema, ensuring every task is an object with "name" and "phase" (integer 1 to 4):',
             '{',
-            '  "summary": "<h3>Creative Strategy</h3><p>A 2-sentence executive summary.</p>",',
+            '  "summary": "<h3>Creative Strategy: ' + body.name + '</h3><p>A 2-3 sentence executive summary explaining how the event in ' + body.location + ' specifically integrates: ' + userPrefs.replace(/"/g, '\\"') + '.</p>",',
             '  "expenses": [',
-            '    { "name": "Venue Deposit", "cost": ' + Math.round(budgetNum * 0.4) + ' },',
-            '    { "name": "Catering & Food", "cost": ' + Math.round(budgetNum * 0.3) + ' }',
+            '    { "name": "<Custom Venue/Setup item tailored to ' + body.type + ' & preferences>", "cost": ' + Math.round(budgetNum * 0.35) + ' },',
+            '    { "name": "<Custom Catering/Hospitality item tailored to preferences>", "cost": ' + Math.round(budgetNum * 0.25) + ' },',
+            '    { "name": "<Dedicated allocation specifically for: ' + userPrefs.replace(/"/g, '\\"') + '>", "cost": ' + Math.round(budgetNum * 0.25) + ' },',
+            '    { "name": "<Custom Production/Logistics item>", "cost": ' + Math.round(budgetNum * 0.15) + ' }',
             '  ],',
             '  "tasks": [',
-            '    { "name": "Lock in primary venue", "phase": 1 },',
-            '    { "name": "Send out digital invitations", "phase": 2 },',
-            '    { "name": "Finalize catering menu", "phase": 3 },',
-            '    { "name": "Execute day-of coordination", "phase": 4 }',
+            '    { "name": "<Custom Phase 1 task incorporating client preferences>", "phase": 1 },',
+            '    { "name": "<Custom Phase 2 vendor task incorporating client preferences>", "phase": 2 },',
+            '    { "name": "<Custom Phase 3 prep task incorporating client preferences>", "phase": 3 },',
+            '    { "name": "<Custom Phase 4 execution task incorporating client preferences>", "phase": 4 }',
             '  ]',
             '}',
-            'Ensure the total of all expense costs roughly equals ' + budgetNum + '. Provide at least 4 expenses and 8 tasks (2 for each of the 4 phases).'
+            'Ensure the total of all expense costs roughly equals ' + budgetNum + '. Provide at least 5 custom expenses and 8 custom tasks (2 for each of the 4 phases).'
         ].join('\n');
 
         const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];

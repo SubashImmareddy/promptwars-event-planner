@@ -423,13 +423,13 @@ if (createForm) {
 
         const newEvent = {
             id: Date.now(),
-            name: document.getElementById('eventName').value,
+            name: document.getElementById('eventName').value.trim(),
             type: document.getElementById('eventType').value,
             date: document.getElementById('eventDate').value,
-            location: document.getElementById('eventLocation').value,
+            location: document.getElementById('eventLocation').value.trim(),
             guests: Number(document.getElementById('guestCount').value) || 0,
             budget: Number(document.getElementById('eventBudget').value) || 0,
-            preferences: document.getElementById('eventPreferences').value,
+            preferences: document.getElementById('eventPreferences').value.trim(),
             expenses: [],
             tasks: [],
             ai_plan: ""
@@ -565,13 +565,16 @@ function openWorkspace(eventId) {
     }
 
     const aiBoxDisplay = currentItem.ai_plan ? 'block' : 'none';
+    const prefDisplay = currentItem.preferences && currentItem.preferences.trim()
+        ? currentItem.preferences.trim()
+        : 'Standard Enterprise Best Practices';
 
     document.getElementById('workspace-content').innerHTML = [
         '<div class="ws-section" style="grid-column: 1 / -1;">',
         '  <div class="ws-top-bar">',
         '    <div>',
         '      <h3 style="margin-top:0; margin-bottom: 6px;">NexusPlan AI Architect</h3>',
-        '      <p class="text-muted" style="margin: 0;">AI generation utilizes active API configuration.</p>',
+        '      <p class="text-muted" style="margin: 0;">AI generation utilizes active API configuration and your custom event preferences.</p>',
         '    </div>',
         '    <div class="ws-btn-group">',
         '      <button type="button" class="btn-secondary" onclick="exportEventReport(' + currentItem.id + ')">Export Executive PDF</button>',
@@ -581,10 +584,11 @@ function openWorkspace(eventId) {
         '  <div id="ai-plan-' + currentItem.id + '" class="ai-box" style="display:' + aiBoxDisplay + ';">' + (currentItem.ai_plan || '') + '</div>',
         '</div>',
         '<div class="ws-section">',
-        '  <h3 style="margin-top:0;">Logistics</h3>',
+        '  <h3 style="margin-top:0;">Logistics & Requirements</h3>',
         '  <p style="margin:8px 0;"><strong>Location:</strong> ' + currentItem.location + '</p>',
         '  <p style="margin:8px 0;"><strong>Headcount:</strong> ' + currentItem.guests + ' Guests</p>',
         '  <p style="margin:8px 0;"><strong>Phase:</strong> ' + timelineText + '</p>',
+        '  <p style="margin:8px 0; line-height: 1.45;"><strong>Preferences:</strong> <span class="text-muted">' + prefDisplay + '</span></p>',
         '</div>',
         '<div class="ws-section" style="display: flex; flex-direction: column; gap: 16px;">',
         '  <h3 style="margin:0;">Financials</h3>',
@@ -739,6 +743,7 @@ function exportEventReport(eventId) {
         '</head><body>',
         '<h1>NexusPlan Executive Event Blueprint</h1>',
         '<p><strong>Event:</strong> ' + currentItem.name + ' (' + currentItem.type + ') | <strong>Date:</strong> ' + currentItem.date + ' | <strong>Location:</strong> ' + currentItem.location + ' | <strong>Guests:</strong> ' + currentItem.guests + '</p>',
+        '<p><strong>Specific Preferences:</strong> ' + (currentItem.preferences || 'Standard configuration') + '</p>',
         '<hr style="border:0; border-top:1px solid #E5E7EB; margin:20px 0;">',
         '<div>' + (currentItem.ai_plan || '<p>No AI strategy generated yet.</p>') + '</div>',
         '<h3>Financial Summary (Total Budget: Rs. ' + currentItem.budget.toLocaleString() + ' | Spent: Rs. ' + spent.toLocaleString() + ' | Remaining: Rs. ' + remaining.toLocaleString() + ')</h3>',
@@ -753,7 +758,7 @@ function exportEventReport(eventId) {
 }
 
 // ==========================================
-// 9. HYBRID AI GENERATOR (AUTO-RETRY + MULTI-MODEL FAILOVER)
+// 9. HYBRID AI GENERATOR (PREFERENCE-DRIVEN + MULTI-MODEL FAILOVER)
 // ==========================================
 function waitDelay(ms) {
     return new Promise(function(resolve) {
@@ -767,28 +772,36 @@ async function generateAIPlan(eventId) {
     const currentItem = eventsData.find(function(e) { return e.id === eventId; });
     if (!currentItem || !planBox) return;
 
+    const userPrefs = (currentItem.preferences && currentItem.preferences.trim())
+        ? currentItem.preferences.trim()
+        : 'Standard high-impact execution and guest experience';
+
     planBox.style.display = 'block';
-    planBox.innerHTML = '<strong>Connecting to Gemini AI Architect and building 4-phase workspace...</strong>';
+    planBox.innerHTML = '<strong>Connecting to Gemini AI Architect and tailoring 4-phase workspace to your preferences...</strong>';
 
     const promptLines = [
         'Act as a premium event architect. Plan a ' + currentItem.type + ' named "' + currentItem.name + '".',
-        'Location: ' + currentItem.location + '. Guests: ' + currentItem.guests + '. Budget: Rs. ' + currentItem.budget + '. Preferences: ' + currentItem.preferences + '.',
+        'Location: ' + currentItem.location + '. Guests: ' + currentItem.guests + '. Budget: Rs. ' + currentItem.budget + '.',
+        'CLIENT PREFERENCES & SPECIFIC REQUIREMENTS: "' + userPrefs + '".',
+        'CRITICAL INSTRUCTION: You MUST heavily customize the specific names of your generated expenses, tasks, and strategy summary so they directly reflect the CLIENT PREFERENCES above. Explicitly mention their specific requests in the expense names and task descriptions. Do NOT output generic placeholder names.',
         'You MUST respond strictly in valid JSON format. Do not include markdown codeblocks.',
-        'Structure the JSON exactly like this, ensuring every task is an object with "name" and "phase" (integer 1 to 4):',
+        'Structure the JSON exactly like this schema, ensuring every task is an object with "name" and "phase" (integer 1 to 4):',
         '{',
-        '  "summary": "<h3>Creative Strategy</h3><p>A 2-sentence executive summary.</p>",',
+        '  "summary": "<h3>Creative Strategy: ' + currentItem.name + '</h3><p>A 2-3 sentence executive summary explaining how the event in ' + currentItem.location + ' specifically integrates: ' + userPrefs.replace(/"/g, '\\"') + '.</p>",',
         '  "expenses": [',
-        '    { "name": "Venue Deposit", "cost": ' + Math.round(currentItem.budget * 0.4) + ' },',
-        '    { "name": "Catering & Hospitality", "cost": ' + Math.round(currentItem.budget * 0.3) + ' }',
+        '    { "name": "<Custom Venue/Setup item tailored to ' + currentItem.type + ' & preferences>", "cost": ' + Math.round(currentItem.budget * 0.35) + ' },',
+        '    { "name": "<Custom Catering/Hospitality item tailored to preferences>", "cost": ' + Math.round(currentItem.budget * 0.25) + ' },',
+        '    { "name": "<Dedicated allocation specifically for: ' + userPrefs.replace(/"/g, '\\"') + '>", "cost": ' + Math.round(currentItem.budget * 0.25) + ' },',
+        '    { "name": "<Custom Production/Logistics item>", "cost": ' + Math.round(currentItem.budget * 0.15) + ' }',
         '  ],',
         '  "tasks": [',
-        '    { "name": "Lock in primary venue", "phase": 1 },',
-        '    { "name": "Confirm vendor contracts", "phase": 2 },',
-        '    { "name": "Finalize catering menu and seating", "phase": 3 },',
-        '    { "name": "Execute day-of event coordination", "phase": 4 }',
+        '    { "name": "<Custom Phase 1 task incorporating client preferences>", "phase": 1 },',
+        '    { "name": "<Custom Phase 2 vendor task incorporating client preferences>", "phase": 2 },',
+        '    { "name": "<Custom Phase 3 prep task incorporating client preferences>", "phase": 3 },',
+        '    { "name": "<Custom Phase 4 execution task incorporating client preferences>", "phase": 4 }',
         '  ]',
         '}',
-        'Ensure the total of all expense costs roughly equals ' + currentItem.budget + '. Provide at least 4 expenses and 8 tasks (2 tasks for each phase 1, 2, 3, and 4).'
+        'Ensure the total of all expense costs roughly equals ' + currentItem.budget + '. Provide at least 5 custom expenses and 8 custom tasks (2 tasks for each phase 1, 2, 3, and 4).'
     ].join('\n');
 
     try {
@@ -945,39 +958,44 @@ async function generateAIPlan(eventId) {
         openWorkspace(currentItem.id);
 
     } catch (err) {
-        console.warn("All live AI retries busy. Activating resilient backup blueprint:", err);
+        console.warn("All live AI retries busy. Activating preference-aware backup blueprint:", err);
+
+        const hasCustomPrefs = Boolean(currentItem.preferences && currentItem.preferences.trim());
+        const prefSnippet = hasCustomPrefs ? currentItem.preferences.trim() : "Custom Guest Experience & Production";
 
         const demoSummary = [
             '<h3>Creative Strategy: ' + currentItem.name + '</h3>',
-            '<p>Curating a high-impact ' + currentItem.type + ' in ' + currentItem.location + ' tailored for ' + currentItem.guests + ' guests. ',
-            'Every logistical milestone and vendor allocation below is calibrated to maximize experience quality within your Rs. ' + currentItem.budget.toLocaleString() + ' budget.</p>',
+            '<p>Curating a high-impact ' + currentItem.type + ' in ' + currentItem.location + ' tailored for ' + currentItem.guests + ' guests within your Rs. ' + currentItem.budget.toLocaleString() + ' budget. ',
+            (hasCustomPrefs
+                ? 'This blueprint has been specifically calibrated around your custom requirements: <strong>"' + prefSnippet + '"</strong>.'
+                : 'Every logistical milestone and vendor allocation below is calibrated to maximize experience quality.') + '</p>',
             '<div style="margin-top:12px; padding:10px 14px; background:var(--primary-light); border-left:3px solid var(--primary); border-radius:6px; font-size:13px;">',
-            '<strong>Note:</strong> The public AI model is currently experiencing high demand. We have initialized a smart baseline blueprint for your event. ',
+            '<strong>Note:</strong> The public AI model is currently experiencing high demand. We have initialized a smart preference-tailored blueprint for your event. ',
             'Have your own Gemini API key? <a href="javascript:void(0)" onclick="switchTab(\'tab-api\')" style="color:var(--accent-text); font-weight:600; text-decoration:underline;">Add it in API Configuration</a> and click Generate Plan again for dedicated AI generation.',
             '</div>'
         ].join('');
 
         currentItem.ai_plan = demoSummary;
         currentItem.expenses = [
-            { name: "Primary Venue & Stage Setup (" + currentItem.location + ")", cost: Math.round(currentItem.budget * 0.4) },
-            { name: "Catering & Refreshments (" + currentItem.guests + " Guests)", cost: Math.round(currentItem.budget * 0.3) },
-            { name: "AV Equipment, Sound & Wi-Fi Infrastructure", cost: Math.round(currentItem.budget * 0.2) },
-            { name: "Branding, Signage & Event Collateral", cost: Math.round(currentItem.budget * 0.1) }
+            { name: "Primary Venue & Stage Setup (" + currentItem.location + ")", cost: Math.round(currentItem.budget * 0.35) },
+            { name: "Catering & Hospitality (" + currentItem.guests + " Guests)", cost: Math.round(currentItem.budget * 0.25) },
+            { name: "Custom Requirement Allocation: " + prefSnippet, cost: Math.round(currentItem.budget * 0.25) },
+            { name: "AV Production, Signage & Event Collateral", cost: Math.round(currentItem.budget * 0.15) }
         ];
         currentItem.tasks = [
             { name: "Secure venue in " + currentItem.location + " for " + currentItem.guests + " attendees", done: false, phase: 1 },
-            { name: "Lock in baseline budget and core vendor contracts", done: false, phase: 1 },
-            { name: "Open registrations and dispatch digital invitations", done: false, phase: 2 },
-            { name: "Finalize catering menu and AV equipment requirements", done: false, phase: 2 },
+            { name: "Scope requirements and budget for: " + prefSnippet, done: false, phase: 1 },
+            { name: "Lock in specialized vendors to deliver: " + prefSnippet, done: false, phase: 2 },
+            { name: "Finalize catering menu, AV specs, and guest registrations", done: false, phase: 2 },
+            { name: "Conduct quality check and rehearsal for: " + prefSnippet, done: false, phase: 3 },
             { name: "Confirm stage run-sheet, speaker lineup, and floor plan", done: false, phase: 3 },
-            { name: "Conduct technical rehearsal and Wi-Fi stress test", done: false, phase: 3 },
-            { name: "Manage day-of registration desk and guest check-in", done: false, phase: 4 },
-            { name: "Oversee main stage sessions and post-event wrap-up", done: false, phase: 4 }
+            { name: "Manage day-of registration desk and VIP guest check-in", done: false, phase: 4 },
+            { name: "Oversee live execution of " + prefSnippet + " & post-event wrap-up", done: false, phase: 4 }
         ];
 
         updateDatabaseRecord(currentItem);
         openWorkspace(currentItem.id);
 
-        showToastNotice("AI server busy — initialized baseline blueprint. Add a personal API key anytime for dedicated access.");
+        showToastNotice("Initialized preference-tailored blueprint. Add a personal API key anytime for dedicated access.");
     }
 }
