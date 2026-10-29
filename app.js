@@ -4,7 +4,32 @@
 let eventsData = JSON.parse(localStorage.getItem('events_backup')) || [];
 let dbClient = null;
 let budgetChartInstance = null;
+// Security: HTML Entity Sanitizer to prevent XSS injection
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
+// Pure calculation helper for financial testing & UI accuracy
+function calculateFinancialSummary(budget, expenses) {
+    const cleanBudget = Math.max(0, Number(budget) || 0);
+    const list = Array.isArray(expenses) ? expenses : [];
+    const spent = list.reduce(function(sum, item) {
+        return sum + (Math.max(0, Number(item && item.cost) || 0));
+    }, 0);
+    const remaining = cleanBudget - spent;
+    return {
+        budget: cleanBudget,
+        spent: spent,
+        remaining: remaining,
+        isOverBudget: remaining < 0
+    };
+}
 try {
     const supabaseUrl = 'https://gbkqhyfynkhsumcreoqw.supabase.co';
     const supabaseKey = 'sb_publishable_StZxKz5BM_yZTU3ya80VaQ_rCqOYGDQ';
@@ -1048,4 +1073,16 @@ async function generateAIPlan(eventId) {
 
         showToastNotice("Initialized smart event blueprint. Add a personal API key anytime for live AI generation.");
     }
+}
+// ==========================================
+// 11. COMMONJS EXPORT FOR AUTOMATED JEST TESTING
+// ==========================================
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        escapeHTML: escapeHTML,
+        calculateFinancialSummary: calculateFinancialSummary,
+        buildSmartFallbackBlueprint: buildSmartFallbackBlueprint,
+        setTheme: setTheme,
+        setFontSize: setFontSize
+    };
 }
