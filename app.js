@@ -42,11 +42,11 @@ function showToastNotice(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
     toast.innerHTML = [
-        '<div>',
+        '<div style="flex: 1; min-width: 0;">',
         '<strong style="font-size: 14px; color: var(--text-main);">System Update</strong>',
-        '<p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">' + message + '</p>',
+        '<p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted); line-height: 1.4;">' + message + '</p>',
         '</div>',
-        '<button onclick="this.parentElement.remove()" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">OK</button>'
+        '<button onclick="this.parentElement.remove()" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; flex-shrink: 0;">OK</button>'
     ].join('');
     document.body.appendChild(toast);
     setTimeout(function() {
@@ -55,7 +55,7 @@ function showToastNotice(message) {
 }
 
 // ==========================================
-// 2. AUTH, SIDEBAR (STATIC DESKTOP / AUTO-CLOSE MOBILE) & LOGOUT
+// 2. AUTH, SIDEBAR (STATIC DESKTOP / OVERLAY MOBILE) & LOGOUT
 // ==========================================
 function checkLoginState() {
     if (localStorage.getItem('nova_admin_auth') === 'true') {
@@ -100,11 +100,34 @@ function executeLogout() {
 }
 
 // ------------------------------------------
-// ENTERPRISE SIDEBAR UX (STATIC DESKTOP / AUTO-CLOSE MOBILE)
+// ENTERPRISE SIDEBAR UX (STATIC DESKTOP / AUTO-CLOSE DRAWER MOBILE)
 // ------------------------------------------
+function syncSidebarBackdrop() {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (!sidebar || !backdrop) return;
+
+    if (window.innerWidth <= 768 && !sidebar.classList.contains('collapsed')) {
+        backdrop.classList.add('active');
+    } else {
+        backdrop.classList.remove('active');
+    }
+}
+
 function toggleSidebar() {
     const sidebar = document.getElementById('app-sidebar');
-    if (sidebar) sidebar.classList.toggle('collapsed');
+    if (!sidebar) return;
+    sidebar.classList.toggle('collapsed');
+    syncSidebarBackdrop();
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('app-sidebar');
+    if (!sidebar) return;
+    if (window.innerWidth <= 768) {
+        sidebar.classList.add('collapsed');
+        syncSidebarBackdrop();
+    }
 }
 
 function initResponsiveSidebar() {
@@ -112,33 +135,35 @@ function initResponsiveSidebar() {
     const hamburger = document.querySelector('.hamburger-btn');
     if (!sidebar) return;
 
-    // On mobile screens (<= 768px), start collapsed so content is visible; on desktop (> 768px), keep open
+    // Start collapsed on mobile phones, pinned open on desktop laptops
     if (window.innerWidth <= 768) {
         sidebar.classList.add('collapsed');
     } else {
         sidebar.classList.remove('collapsed');
     }
+    syncSidebarBackdrop();
+
+    // Adjust smoothly if window is resized between mobile and desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('collapsed');
+        } else {
+            sidebar.classList.add('collapsed');
+        }
+        syncSidebarBackdrop();
+    });
 
     // Mobile Only: Click anywhere outside the sidebar to close it
     document.addEventListener('click', function(event) {
-        if (window.innerWidth > 768) return; // Do nothing on desktop/laptop!
+        if (window.innerWidth > 768) return;
 
         const isClickInsideSidebar = sidebar.contains(event.target);
         const isClickOnHamburger = hamburger && hamburger.contains(event.target);
         const isSidebarOpen = !sidebar.classList.contains('collapsed');
 
         if (isSidebarOpen && !isClickInsideSidebar && !isClickOnHamburger) {
-            sidebar.classList.add('collapsed');
+            closeMobileSidebar();
         }
-    });
-
-    // Mobile Only: Auto-close the sidebar as soon as a menu link is clicked
-    document.querySelectorAll('.nav-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            if (window.innerWidth <= 768) {
-                sidebar.classList.add('collapsed');
-            }
-        });
     });
 }
 
@@ -213,7 +238,6 @@ function refreshApiKeyUI() {
     const removeBtn = document.getElementById('removeKeyBtn');
     const statusText = document.getElementById('keyStatus');
 
-    // Always keep the Reset to Default button visible
     if (removeBtn) {
         removeBtn.style.display = 'inline-block';
     }
@@ -221,7 +245,7 @@ function refreshApiKeyUI() {
     if (savedKey) {
         if (inputField) inputField.value = savedKey;
         if (statusText) {
-            statusText.textContent = "Active Mode: Personal Gemini API Key is saved and active.";
+            statusText.textContent = "Active Mode: Personal Gemini API Key is verified and active.";
             statusText.style.color = "var(--success)";
         }
     } else {
@@ -345,9 +369,9 @@ function renderDashboard() {
 
         grid.innerHTML += [
             '<div class="event-card" style="position: relative;">',
-            '<button type="button" onclick="deleteEvent(' + item.id + ')" class="btn-danger" style="position: absolute; top: 20px; right: 20px; z-index: 2;">Delete</button>',
+            '<button type="button" onclick="deleteEvent(' + item.id + ')" class="btn-danger" style="position: absolute; top: 18px; right: 18px; z-index: 2;">Delete</button>',
             '<div onclick="openWorkspace(' + item.id + ')">',
-            '<h3 style="margin:0 0 8px 0; padding-right: 70px; font-weight: 600;">' + item.name + '</h3>',
+            '<h3 style="margin:0 0 8px 0; padding-right: 75px; font-weight: 600; word-break: break-word;">' + item.name + '</h3>',
             '<p class="text-muted" style="margin:0 0 15px 0;">' + item.type + ' | ' + item.date + '</p>',
             '<div style="display: inline-block; background: var(--primary-light); color: var(--accent-text); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;">',
             'Due: ' + daysBadge,
@@ -385,11 +409,7 @@ function switchTab(tabId) {
     const contentArea = document.querySelector('.content-area');
     if (contentArea) contentArea.scrollTop = 0;
 
-    // Only auto-close sidebar on mobile screens; leave it open on desktop/laptop
-    if (window.innerWidth <= 768) {
-        const sidebar = document.getElementById('app-sidebar');
-        if (sidebar) sidebar.classList.add('collapsed');
-    }
+    closeMobileSidebar();
 }
 
 const createForm = document.getElementById('create-event-form');
@@ -452,10 +472,10 @@ function openWorkspace(eventId) {
     const expensesHTML = currentItem.expenses
         ? currentItem.expenses.map(function(exp, i) {
             return [
-                '<li style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">',
-                '<span style="flex: 1; word-break: break-word; line-height: 1.4;">' + exp.name + '</span>',
+                '<li>',
+                '<span style="flex: 1; min-width: 0; word-break: break-word; line-height: 1.4;">' + exp.name + '</span>',
                 '<div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0; white-space: nowrap;">',
-                '<span>Rs. ' + Number(exp.cost).toLocaleString() + '</span>',
+                '<span style="font-weight: 500;">Rs. ' + Number(exp.cost).toLocaleString() + '</span>',
                 '<button type="button" class="btn-danger" onclick="removeExpense(' + currentItem.id + ', ' + i + ')">Remove</button>',
                 '</div>',
                 '</li>'
@@ -486,15 +506,16 @@ function openWorkspace(eventId) {
                 });
 
             if (phaseTasks.length > 0) {
-                tasksHTML += '<h4 style="margin: 15px 0 5px 0; color: var(--accent-text); font-size: 13px; text-transform: uppercase;">' + phaseNames[index] + '</h4>';
+                tasksHTML += '<h4 style="margin: 18px 0 6px 0; color: var(--accent-text); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">' + phaseNames[index] + '</h4>';
                 phaseTasks.forEach(function(task) {
                     const lineStyle = task.done ? 'line-through' : 'none';
                     const opacityStyle = task.done ? '0.5' : '1';
                     const checkedAttr = task.done ? 'checked' : '';
                     tasksHTML += [
                         '<li>',
-                        '<label style="text-decoration: ' + lineStyle + '; opacity: ' + opacityStyle + '; display:flex; align-items:center; gap:12px; cursor:pointer;">',
-                        '<input type="checkbox" ' + checkedAttr + ' onchange="toggleTask(' + currentItem.id + ', ' + task.originalIndex + ')" style="width:auto; margin:0;"> ' + task.name,
+                        '<label class="task-label" style="text-decoration: ' + lineStyle + '; opacity: ' + opacityStyle + ';">',
+                        '<input type="checkbox" ' + checkedAttr + ' onchange="toggleTask(' + currentItem.id + ', ' + task.originalIndex + ')">',
+                        '<span>' + task.name + '</span>',
                         '</label>',
                         '<button type="button" class="btn-danger" onclick="removeTask(' + currentItem.id + ', ' + task.originalIndex + ')">Remove</button>',
                         '</li>'
@@ -515,15 +536,16 @@ function openWorkspace(eventId) {
             });
 
         if (unphasedTasks.length > 0) {
-            tasksHTML += '<h4 style="margin: 15px 0 5px 0; color: var(--accent-text); font-size: 13px; text-transform: uppercase;">General Tasks</h4>';
+            tasksHTML += '<h4 style="margin: 18px 0 6px 0; color: var(--accent-text); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">General Tasks</h4>';
             unphasedTasks.forEach(function(task) {
                 const lineStyle = task.done ? 'line-through' : 'none';
                 const opacityStyle = task.done ? '0.5' : '1';
                 const checkedAttr = task.done ? 'checked' : '';
                 tasksHTML += [
                     '<li>',
-                    '<label style="text-decoration: ' + lineStyle + '; opacity: ' + opacityStyle + '; display:flex; align-items:center; gap:12px; cursor:pointer;">',
-                    '<input type="checkbox" ' + checkedAttr + ' onchange="toggleTask(' + currentItem.id + ', ' + task.originalIndex + ')" style="width:auto; margin:0;"> ' + task.name,
+                    '<label class="task-label" style="text-decoration: ' + lineStyle + '; opacity: ' + opacityStyle + ';">',
+                    '<input type="checkbox" ' + checkedAttr + ' onchange="toggleTask(' + currentItem.id + ', ' + task.originalIndex + ')">',
+                    '<span>' + task.name + '</span>',
                     '</label>',
                     '<button type="button" class="btn-danger" onclick="removeTask(' + currentItem.id + ', ' + task.originalIndex + ')">Remove</button>',
                     '</li>'
@@ -546,12 +568,12 @@ function openWorkspace(eventId) {
 
     document.getElementById('workspace-content').innerHTML = [
         '<div class="ws-section" style="grid-column: 1 / -1;">',
-        '  <div style="display:flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">',
+        '  <div class="ws-top-bar">',
         '    <div>',
-        '      <h3 style="margin-top:0;">NexusPlan AI Architect</h3>',
-        '      <p class="text-muted" style="margin-bottom: 20px;">AI generation utilizes active API configuration.</p>',
+        '      <h3 style="margin-top:0; margin-bottom: 6px;">NexusPlan AI Architect</h3>',
+        '      <p class="text-muted" style="margin: 0;">AI generation utilizes active API configuration.</p>',
         '    </div>',
-        '    <div style="display:flex; gap: 10px;">',
+        '    <div class="ws-btn-group">',
         '      <button type="button" class="btn-secondary" onclick="exportEventReport(' + currentItem.id + ')">Export Executive PDF</button>',
         '      <button type="button" class="btn-primary" onclick="generateAIPlan(' + currentItem.id + ')">Generate Plan</button>',
         '    </div>',
@@ -560,31 +582,31 @@ function openWorkspace(eventId) {
         '</div>',
         '<div class="ws-section">',
         '  <h3 style="margin-top:0;">Logistics</h3>',
-        '  <p style="margin:5px 0;"><strong>Location:</strong> ' + currentItem.location + '</p>',
-        '  <p style="margin:5px 0;"><strong>Headcount:</strong> ' + currentItem.guests + ' Guests</p>',
-        '  <p style="margin:5px 0;"><strong>Phase:</strong> ' + timelineText + '</p>',
+        '  <p style="margin:8px 0;"><strong>Location:</strong> ' + currentItem.location + '</p>',
+        '  <p style="margin:8px 0;"><strong>Headcount:</strong> ' + currentItem.guests + ' Guests</p>',
+        '  <p style="margin:8px 0;"><strong>Phase:</strong> ' + timelineText + '</p>',
         '</div>',
-        '<div class="ws-section" style="display: flex; flex-direction: column; gap: 20px;">',
+        '<div class="ws-section" style="display: flex; flex-direction: column; gap: 16px;">',
         '  <h3 style="margin:0;">Financials</h3>',
-        '  <div style="display: flex; gap: 20px; align-items: center;">',
-        '    <div style="flex: 1;">',
-        '      <p style="margin:0 0 15px 0;">Allocated: Rs. ' + currentItem.budget.toLocaleString() + ' | Available: Rs. ' + remaining.toLocaleString() + ' ' + warning + '</p>',
-        '      <div style="display:flex; gap:10px; margin-bottom:20px;">',
-        '        <input type="text" id="exp-name-' + currentItem.id + '" placeholder="Expense detail">',
-        '        <input type="number" id="exp-cost-' + currentItem.id + '" placeholder="Amount" style="width: 120px;">',
+        '  <div class="financial-row">',
+        '    <div class="financial-inputs-col">',
+        '      <p style="margin:0 0 14px 0; line-height: 1.5;"><strong>Allocated:</strong> Rs. ' + currentItem.budget.toLocaleString() + ' &nbsp;|&nbsp; <strong>Available:</strong> Rs. ' + remaining.toLocaleString() + ' ' + warning + '</p>',
+        '      <div class="action-input-row">',
+        '        <input type="text" id="exp-name-' + currentItem.id + '" class="input-grow" placeholder="Expense detail (e.g., Catering)">',
+        '        <input type="number" id="exp-cost-' + currentItem.id + '" class="input-amount" placeholder="Amount (Rs.)">',
         '        <button type="button" class="btn-secondary" onclick="addExpense(' + currentItem.id + ')">Add</button>',
         '      </div>',
         '    </div>',
-        '    <div style="width: 140px; height: 140px; position: relative;">',
+        '    <div class="financial-chart-container">',
         '      <canvas id="budgetChart-' + currentItem.id + '"></canvas>',
         '    </div>',
         '  </div>',
-        '  <ul class="checklist" style="max-height: 250px; overflow-y: auto;">' + expensesHTML + '</ul>',
+        '  <ul class="checklist" style="max-height: 260px; overflow-y: auto;">' + expensesHTML + '</ul>',
         '</div>',
         '<div class="ws-section" style="grid-column: 1 / -1;">',
         '  <h3 style="margin-top:0;">Action Items (4-Phase Timeline)</h3>',
-        '  <div style="display:flex; gap:10px; margin-bottom:20px;">',
-        '    <input type="text" id="task-name-' + currentItem.id + '" placeholder="Describe task...">',
+        '  <div class="action-input-row">',
+        '    <input type="text" id="task-name-' + currentItem.id + '" class="input-grow" placeholder="Describe manual task...">',
         '    <button type="button" class="btn-secondary" onclick="addTask(' + currentItem.id + ')">Add Manual Task</button>',
         '  </div>',
         '  <ul class="checklist">' + tasksHTML + '</ul>',

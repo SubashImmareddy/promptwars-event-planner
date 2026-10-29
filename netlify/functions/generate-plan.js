@@ -4,53 +4,85 @@ exports.handler = async function(event, context) {
     }
 
     try {
-        const body = JSON.parse(event.body);
+        const body = JSON.parse(event.body || '{}');
         const apiKey = process.env.GEMINI_API_KEY;
-        
+
         if (!apiKey) throw new Error("API Key missing on Netlify server.");
 
-        // V2 PROMPT: Strict JSON Format
-        const prompt = `Act as a premium event architect. Plan a ${body.type} named "${body.name}". Location: ${body.location}. Guests: ${body.guests}. Budget: ₹${body.budget}. Preferences: ${body.preferences}. 
-        You MUST respond strictly in valid JSON format. Do not use markdown wrappers like \`\`\`json.
-        Structure the JSON exactly like this:
-        {
-            "summary": "<h3>Creative Strategy</h3><p>A 2-sentence executive summary.</p>",
-            "expenses": [
-                { "name": "Venue Deposit", "cost": ${Math.round(body.budget * 0.4)} },
-                { "name": "Catering & Food", "cost": ${Math.round(body.budget * 0.3)} }
-            ],
-            "tasks": [
-                "Lock in primary venue",
-                "Send out digital invitations",
-                "Finalize catering menu"
-            ]
+        const budgetNum = Number(body.budget) || 100000;
+        const prompt = [
+            'Act as a premium event architect. Plan a ' + body.type + ' named "' + body.name + '".',
+            'Location: ' + body.location + '. Guests: ' + body.guests + '. Budget: Rs. ' + budgetNum + '. Preferences: ' + body.preferences + '.',
+            'You MUST respond strictly in valid JSON format. Do not include markdown codeblocks.',
+            'Structure the JSON exactly like this, ensuring every task is an object with "name" and "phase" (integer 1 to 4):',
+            '{',
+            '  "summary": "<h3>Creative Strategy</h3><p>A 2-sentence executive summary.</p>",',
+            '  "expenses": [',
+            '    { "name": "Venue Deposit", "cost": ' + Math.round(budgetNum * 0.4) + ' },',
+            '    { "name": "Catering & Food", "cost": ' + Math.round(budgetNum * 0.3) + ' }',
+            '  ],',
+            '  "tasks": [',
+            '    { "name": "Lock in primary venue", "phase": 1 },',
+            '    { "name": "Send out digital invitations", "phase": 2 },',
+            '    { "name": "Finalize catering menu", "phase": 3 },',
+            '    { "name": "Execute day-of coordination", "phase": 4 }',
+            '  ]',
+            '}',
+            'Ensure the total of all expense costs roughly equals ' + budgetNum + '. Provide at least 4 expenses and 8 tasks (2 for each of the 4 phases).'
+        ].join('\n');
+
+        const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+        let rawOutput = null;
+        let lastError = "Model experiencing high demand.";
+
+        for (let i = 0; i < modelsToTry.length; i++) {
+            const modelName = modelsToTry[i];
+            try {
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent?key=' + apiKey, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    lastError = data.error.message;
+                    continue;
+                }
+
+                const candidateText = data.candidates &&
+                    data.candidates[0] &&
+                    data.candidates[0].content &&
+                    data.candidates[0].content.parts &&
+                    data.candidates[0].content.parts[0] &&
+                    data.candidates[0].content.parts[0].text;
+
+                if (candidateText) {
+                    rawOutput = candidateText;
+                    break;
+                }
+            } catch (innerErr) {
+                lastError = innerErr.message;
+            }
         }
-        Ensure the total of all expense costs roughly equals ₹${body.budget}. Provide at least 4 expenses and 5 tasks.`;
 
-        // UPDATED API ENDPOINT: gemini-3.8-flash
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
+        if (!rawOutput) {
+            throw new Error(lastError);
+        }
 
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
+        const fence = String.fromCharCode(96, 96, 96);
+        rawOutput = String(rawOutput).split(fence + 'json').join('').split(fence + 'html').join('').split(fence).join('').trim();
 
-        // Clean the JSON string before sending it back to app.js
-        let rawOutput = data.candidates[0].content.parts[0].text;
-        rawOutput = rawOutput.replace(/```json/g, '').replace(/```html/g, '').replace(/```/g, '').trim();
-
-        return { 
-            statusCode: 200, 
-            body: JSON.stringify({ plan: rawOutput }) 
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ plan: rawOutput })
         };
-        
+
     } catch (err) {
         console.error(err);
-        return { 
-            statusCode: 500, 
-            body: JSON.stringify({ error: err.message }) 
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: err.message })
         };
     }
 };

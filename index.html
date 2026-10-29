@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>NexusPlan - Professional Event Architect</title>
     <link rel="icon" type="image/png" href="NexusPlan Tech Logo.png">
     
@@ -11,7 +11,7 @@
     
     <!-- Database and Charting Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- ADD THIS LINE -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body data-theme="light" class="font-medium">
 
@@ -21,7 +21,7 @@
             <h3 style="margin-top: 0;">Contact Administrator</h3>
             <div style="margin: 20px 0; text-align: left; line-height: 1.6;">
                 <p><strong>Administrator:</strong> Subash Reddy</p>
-                <p><strong>Email:</strong> <a href="mailto:subashacademics475@gmail.com" style="color: var(--primary);">subashacademics475@gmail.com</a></p>
+                <p><strong>Email:</strong> <a href="mailto:subashacademics475@gmail.com" style="color: var(--accent-text); word-break: break-all;">subashacademics475@gmail.com</a></p>
                 <p class="text-muted" style="font-size: 13px; margin-top: 10px;">Please reach out for enterprise access or API troubleshooting.</p>
             </div>
             <button onclick="closeContactModal()" class="btn-secondary" style="width: 100%;">Close</button>
@@ -33,7 +33,7 @@
         <div class="modal-card">
             <h3 style="margin-top: 0;">Confirm Logout</h3>
             <p class="text-muted" style="margin: 15px 0 25px 0;">Are you sure you want to securely log out of the NexusPlan workspace?</p>
-            <div style="display: flex; gap: 10px;">
+            <div class="modal-actions">
                 <button onclick="closeLogoutModal()" class="btn-secondary" style="flex: 1;">Cancel</button>
                 <button onclick="executeLogout()" class="btn-danger" style="flex: 1;">Logout</button>
             </div>
@@ -48,7 +48,7 @@
                 <p>You are currently utilizing the shared <strong>free-tier Gemini API</strong>. This shared resource may experience rate limiting or slower generation times.</p>
                 <p style="margin-top: 10px;">For optimal performance and unrestricted access, please configure your personal Gemini API key in the System Settings.</p>
             </div>
-            <div style="display: flex; gap: 10px;">
+            <div class="modal-actions">
                 <button onclick="closeApiModal()" class="btn-secondary" style="flex: 1;">Dismiss</button>
                 <button onclick="goToApiSettings()" class="btn-primary" style="flex: 1;">Configure API</button>
             </div>
@@ -59,30 +59,32 @@
     <div id="login-screen" class="login-overlay">
         <div class="login-card">
             <img src="NexusPlan Tech Logo.png" alt="NexusPlan Logo" class="brand-logo-img">
-            <p class="text-muted" style="margin-bottom: 25px;">Admin Workspace Portal</p>
+            <p class="text-muted" style="margin-bottom: 22px;">Admin Workspace Portal</p>
             
             <div class="test-credentials">
                 <strong>Evaluation Mode Active</strong>
-                <p style="margin: 5px 0 12px 0; font-size: 12px; color: var(--text-muted); line-height: 1.4;">For testing and evaluation purposes, please use the provided staging credentials below to access the dashboard:</p>
-                <div style="background: var(--bg-main); padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
-                    User: <code>admin</code> &nbsp;|&nbsp; Pass: <code>promptwars</code>
+                <p style="margin: 6px 0 12px 0; font-size: 12px; color: var(--text-muted); line-height: 1.45;">For testing and evaluation purposes, please use the provided staging credentials below to access the dashboard:</p>
+                <div class="test-credentials-box">
+                    <span>User: <code>admin</code></span>
+                    <span class="cred-divider">|</span>
+                    <span>Pass: <code>promptwars</code></span>
                 </div>
             </div>
 
             <div id="login-form">
                 <div class="input-group">
-                    <input type="text" id="loginUser" placeholder="Username" required class="login-input">
+                    <input type="text" id="loginUser" placeholder="Username" required class="login-input" autocomplete="username">
                 </div>
                 <div class="input-group">
-                    <input type="password" id="loginPass" placeholder="Password" required class="login-input">
+                    <input type="password" id="loginPass" placeholder="Password" required class="login-input" autocomplete="current-password">
                 </div>
-                <p id="loginError" style="color: var(--danger); font-size: 13px; display: none; margin: 5px 0 0 0; text-align: left;">Incorrect credentials.</p>
+                <p id="loginError" style="color: var(--danger); font-size: 13px; display: none; margin: 5px 0 0 0; text-align: left;">Incorrect credentials. Please use admin / promptwars.</p>
                 <button type="button" onclick="handleLogin()" class="btn-primary login-btn">Access Workspace</button>
             </div>
             
             <div class="login-footer">
                 Need an enterprise account? <br>
-                <button onclick="openContactModal()" class="btn-text" style="margin-top: 5px;">Contact Administrator</button>
+                <button onclick="openContactModal()" class="btn-text" style="margin-top: 6px;">Contact Administrator</button>
             </div>
             <div class="watermark-login">© 2026 Copyrighted to Subash Reddy</div>
         </div>
@@ -94,14 +96,15 @@
         <!-- TOP NAVIGATION BAR -->
         <header class="top-navbar">
             <div class="nav-left">
-                <button onclick="toggleSidebar()" class="hamburger-btn">☰</button>
+                <button onclick="toggleSidebar()" class="hamburger-btn" aria-label="Toggle Menu">☰</button>
                 <img src="NexusPlan Tech Logo.png" alt="NexusPlan Logo" class="brand-top-img">
             </div>
             <div class="nav-right">
                 <div class="profile-menu-container">
                     <button onclick="toggleDropdown(event)" class="profile-btn">
                         <div class="avatar">A</div>
-                        Admin Workspace ▼
+                        <span class="profile-label">Admin Workspace</span>
+                        <span style="font-size: 10px; opacity: 0.8;">▼</span>
                     </button>
                     <div id="profile-dropdown" class="dropdown-menu">
                         <button onclick="confirmLogout()" class="dropdown-item text-danger">Logout</button>
@@ -111,6 +114,9 @@
         </header>
 
         <div class="app-body">
+            <!-- MOBILE SIDEBAR BACKDROP -->
+            <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
             <!-- COLLAPSIBLE SIDEBAR -->
             <aside id="app-sidebar" class="sidebar">
                 <nav class="nav-menu">
@@ -139,7 +145,7 @@
                 <section id="tab-dashboard" class="tab-pane active">
                     <header class="page-header">
                         <h2>My Events</h2>
-                        <p>Select a project to open the workspace.</p>
+                        <p>Select a project to open the workspace or initialize a new event blueprint.</p>
                     </header>
                     <div id="events-grid" class="events-grid"></div>
                 </section>
@@ -147,7 +153,7 @@
                 <section id="tab-create" class="tab-pane">
                     <header class="page-header">
                         <h2>Create New Event</h2>
-                        <p>Enter parameters to generate an AI-powered foundation.</p>
+                        <p>Enter parameters to generate an AI-powered 4-phase foundation.</p>
                     </header>
                     <div class="card form-card">
                         <form id="create-event-form">
@@ -167,16 +173,15 @@
                                 </select>
                             </div>
                             <div class="form-row">
-                                <!-- Calendar anywhere-click fix implemented here -->
                                 <input type="date" id="eventDate" required onclick="if(this.showPicker) this.showPicker();" style="cursor: pointer;">
-                                <input type="text" id="eventLocation" placeholder="Location" required>
+                                <input type="text" id="eventLocation" placeholder="Location (e.g., Hyderabad)" required>
                             </div>
                             <div class="form-row">
-                                <input type="number" id="guestCount" placeholder="Guest Count" required>
-                                <input type="number" id="eventBudget" placeholder="Total Budget (₹)" required>
+                                <input type="number" id="guestCount" placeholder="Guest Count (e.g., 200)" min="1" required>
+                                <input type="number" id="eventBudget" placeholder="Total Budget in Rs. (e.g., 150000)" min="1" required>
                             </div>
-                            <textarea id="eventPreferences" placeholder="Specific requirements or preferences..."></textarea>
-                            <button type="submit" class="btn-primary" style="margin-top: 15px;">Initialize Event Workspace</button>
+                            <textarea id="eventPreferences" placeholder="Specific requirements, theme ideas, VIP needs, or catering preferences..."></textarea>
+                            <button type="submit" class="btn-primary form-submit-btn">Initialize Event Workspace</button>
                         </form>
                     </div>
                 </section>
@@ -191,7 +196,7 @@
                         <div class="card">
                             <h3 style="margin-top: 0;">Appearance</h3>
                             <p class="text-muted" style="margin-bottom: 20px;">Toggle between Light and Dark mode.</p>
-                            <div style="display:flex; gap:10px;">
+                            <div class="settings-btn-group">
                                 <button onclick="setTheme('light')" class="btn-secondary">Light Mode</button>
                                 <button onclick="setTheme('dark')" class="btn-secondary">Dark Mode</button>
                             </div>
@@ -199,8 +204,8 @@
 
                         <div class="card">
                             <h3 style="margin-top: 0;">Accessibility</h3>
-                            <p class="text-muted" style="margin-bottom: 20px;">Adjust the application font size.</p>
-                            <div style="display:flex; gap:10px;">
+                            <p class="text-muted" style="margin-bottom: 20px;">Adjust the global application font size.</p>
+                            <div class="settings-btn-group">
                                 <button onclick="setFontSize('small')" class="btn-secondary">Small</button>
                                 <button onclick="setFontSize('medium')" class="btn-secondary">Medium</button>
                                 <button onclick="setFontSize('large')" class="btn-secondary">Large</button>
@@ -210,31 +215,33 @@
                 </section>
 
                 <section id="tab-api" class="tab-pane">
-    <header class="page-header">
-        <h2>API Configuration</h2>
-        <p>Manage your Gemini AI integration.</p>
-    </header>
-    <div class="card">
-        <h3 style="margin-top: 0;">Gemini AI Key</h3>
-        <p class="text-muted" style="margin-bottom: 20px;">By default, NexusPlan uses a free-tier shared API which may experience rate limits. Provide your personal Gemini API key for instant, unthrottled generation. Your key is stored securely in this browser.</p>
-        <div style="display:flex; gap:12px; align-items: center;">
-            <input type="password" id="apiKeyInput" placeholder="Enter personal Gemini API Key" style="margin:0; flex: 1; max-width: 400px; padding: 10px; border-radius: 6px;">
-            <button onclick="saveApiKey()" class="btn-primary" style="width:auto; white-space:nowrap;">Save API Key</button>
-            <button onclick="removeApiKey()" id="removeKeyBtn" class="btn-danger" style="display: none; width:auto; white-space:nowrap;">Reset to Default</button>
-        </div>
-        <p id="keyStatus" class="status-msg" style="margin-top: 10px; font-size: 13px; font-weight: 500;"></p>
-    </div>
-</section>
+                    <header class="page-header">
+                        <h2>API Configuration</h2>
+                        <p>Manage your Google Gemini AI integration and failover mode.</p>
+                    </header>
+                    <div class="card">
+                        <h3 style="margin-top: 0;">Gemini AI Key</h3>
+                        <p class="text-muted" style="margin-bottom: 20px; line-height: 1.6;">By default, NexusPlan uses a free-tier shared API which may experience rate limits during heavy traffic. Provide your personal Gemini API key for instant, unthrottled generation. Your key is validated live and stored securely in this browser.</p>
+                        <div class="api-input-group">
+                            <input type="password" id="apiKeyInput" placeholder="Enter personal Gemini API Key (AIza...)">
+                            <div class="api-btn-pair">
+                                <button type="button" onclick="saveApiKey()" class="btn-primary">Save API Key</button>
+                                <button type="button" onclick="removeApiKey()" id="removeKeyBtn" class="btn-danger">Reset to Default</button>
+                            </div>
+                        </div>
+                        <p id="keyStatus" class="status-msg"></p>
+                    </div>
+                </section>
 
                 <section id="tab-workspace" class="tab-pane">
                     <div class="workspace-header">
-                        <button class="btn-back" onclick="switchTab('tab-dashboard')">Back to Projects</button>
-                        <h2 id="ws-title" style="margin:0;">Workspace</h2>
+                        <button class="btn-back" onclick="switchTab('tab-dashboard')">← Back to Projects</button>
+                        <h2 id="ws-title" style="margin:0; word-break: break-word;">Workspace</h2>
                     </div>
                     <div id="workspace-content" class="workspace-grid"></div>
                 </section>
 
-                <!-- GLOBAL FOOTER (Always Visible) -->
+                <!-- GLOBAL FOOTER -->
                 <footer class="global-footer">
                     © 2026 Copyrighted to Subash Reddy
                 </footer>
