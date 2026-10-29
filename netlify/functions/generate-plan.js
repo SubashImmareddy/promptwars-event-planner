@@ -15,28 +15,24 @@ exports.handler = async function(event, context) {
             : 'Standard high-impact execution and guest experience';
 
         const prompt = [
-            'Act as a premium event architect. Plan a ' + body.type + ' named "' + body.name + '".',
-            'Location: ' + body.location + '. Guests: ' + body.guests + '. Budget: Rs. ' + budgetNum + '.',
-            'CLIENT PREFERENCES & SPECIFIC REQUIREMENTS: "' + userPrefs + '".',
-            'CRITICAL INSTRUCTION: You MUST heavily customize the specific names of your generated expenses, tasks, and strategy summary so they directly reflect the CLIENT PREFERENCES above. Explicitly mention their specific requests in the expense names and task descriptions. Do NOT output generic placeholder names.',
-            'You MUST respond strictly in valid JSON format. Do not include markdown codeblocks.',
-            'Structure the JSON exactly like this schema, ensuring every task is an object with "name" and "phase" (integer 1 to 4):',
+            'Act as an elite event architect. Plan a ' + body.type + ' named "' + body.name + '".',
+            'Location: ' + body.location + '. Guests: ' + body.guests + '. Total Budget: Rs. ' + budgetNum + '.',
+            'Client Notes & Preferences: "' + userPrefs + '".',
+            'CRITICAL RULES:',
+            '1. NEVER copy, quote, or echo the raw Client Notes text into the summary, expense names, or task names.',
+            '2. Instead, professionally interpret the Client Notes (such as age group, evening timing, fun activities, food style, or keeping total spend under budget) into polished, concise, executive-grade titles.',
+            '3. If the client mentions not spending the entire budget, make the sum of expenses 80% to 85% of Rs. ' + budgetNum + ' so they have an unspent reserve. Otherwise, make expenses roughly equal Rs. ' + budgetNum + '.',
+            '4. Respond strictly in valid JSON format with no markdown wrappers.',
             '{',
-            '  "summary": "<h3>Creative Strategy: ' + body.name + '</h3><p>A 2-3 sentence executive summary explaining how the event in ' + body.location + ' specifically integrates: ' + userPrefs.replace(/"/g, '\\"') + '.</p>",',
+            '  "summary": "<h3>Creative Strategy: ' + body.name + '</h3><p>2-3 sentences of polished executive strategy tailored to the audience, timing, and vibe.</p>",',
             '  "expenses": [',
-            '    { "name": "<Custom Venue/Setup item tailored to ' + body.type + ' & preferences>", "cost": ' + Math.round(budgetNum * 0.35) + ' },',
-            '    { "name": "<Custom Catering/Hospitality item tailored to preferences>", "cost": ' + Math.round(budgetNum * 0.25) + ' },',
-            '    { "name": "<Dedicated allocation specifically for: ' + userPrefs.replace(/"/g, '\\"') + '>", "cost": ' + Math.round(budgetNum * 0.25) + ' },',
-            '    { "name": "<Custom Production/Logistics item>", "cost": ' + Math.round(budgetNum * 0.15) + ' }',
+            '    { "name": "Polished Expense Title (3-7 words)", "cost": 15000 }',
             '  ],',
             '  "tasks": [',
-            '    { "name": "<Custom Phase 1 task incorporating client preferences>", "phase": 1 },',
-            '    { "name": "<Custom Phase 2 vendor task incorporating client preferences>", "phase": 2 },',
-            '    { "name": "<Custom Phase 3 prep task incorporating client preferences>", "phase": 3 },',
-            '    { "name": "<Custom Phase 4 execution task incorporating client preferences>", "phase": 4 }',
+            '    { "name": "Polished Actionable Task (6-12 words)", "phase": 1 }',
             '  ]',
             '}',
-            'Ensure the total of all expense costs roughly equals ' + budgetNum + '. Provide at least 5 custom expenses and 8 custom tasks (2 for each of the 4 phases).'
+            'Provide 4 to 5 expenses and exactly 8 tasks (2 tasks for each phase 1, 2, 3, and 4).'
         ].join('\n');
 
         const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
