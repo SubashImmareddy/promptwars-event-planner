@@ -1,5 +1,39 @@
-module.exports = async function(req, res) {
-    if (req.method !== 'POST') {
+'use strict';
+
+/**
+ * @fileoverview Vercel Serverless Edge Handler for NexusPlan Gemini AI Generation
+ */
+
+const CANDIDATE_MODELS = Object.freeze([
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash'
+]);
+
+/**
+ * Sanitizes incoming string fields to prevent prompt injection and oversized payloads.
+ * @param {*} val - Input string.
+ * @param {number} maxLen - Maximum allowed characters.
+ * @returns {string} Sanitized string.
+ */
+function sanitizeField(val, maxLen) {
+    if (val === null || val === undefined) return '';
+    return String(val).trim().slice(0, maxLen || 500);
+}
+
+/**
+ * Vercel Serverless Function Entry Point.
+ * @param {Object} req - HTTP Request object.
+ * @param {Object} res - HTTP Response object.
+ */
+module.exports = async function generatePlanHandler(req, res) {
+    if (typeof res.setHeader === 'function') {
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('X-Frame-Options', 'DENY');
+        res.setHeader('Cache-Control', 'no-store');
+    }
+
+    if (!req || req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
@@ -7,24 +41,28 @@ module.exports = async function(req, res) {
         const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
         const apiKey = process.env.GEMINI_API_KEY;
 
-        if (!apiKey) throw new Error("API Key missing on Vercel server.");
+        if (!apiKey) {
+            return res.status(503).json({ error: 'Server API Key configuration unavailable.' });
+        }
 
-        const budgetNum = Number(body.budget) || 100000;
-        const userPrefs = (body.preferences && String(body.preferences).trim())
-            ? String(body.preferences).trim()
-            : 'Standard high-impact execution and guest experience';
+        const safeName = sanitizeField(body.name || 'Event', 120);
+        const safeType = sanitizeField(body.type || 'Conference', 60);
+        const safeLocation = sanitizeField(body.location || 'Venue', 120);
+        const safeGuests = Math.max(1, Math.min(100000, Number(body.guests) || 50));
+        const budgetNum = Math.max(1000, Math.min(1000000000, Number(body.budget) || 100000));
+        const userPrefs = sanitizeField(body.preferences, 600) || 'Standard high-impact execution and guest experience';
 
         const prompt = [
-            'Act as an elite event architect. Plan a ' + body.type + ' named "' + body.name + '".',
-            'Location: ' + body.location + '. Guests: ' + body.guests + '. Total Budget: Rs. ' + budgetNum + '.',
+            'Act as an elite event architect. Plan a ' + safeType + ' named "' + safeName + '".',
+            'Location: ' + safeLocation + '. Guests: ' + safeGuests + '. Total Budget: Rs. ' + budgetNum + '.',
             'Client Notes & Preferences: "' + userPrefs + '".',
             'CRITICAL RULES:',
             '1. NEVER copy, quote, or echo the raw Client Notes text into the summary, expense names, or task names.',
-            '2. Instead, professionally interpret the Client Notes (such as age group, evening timing, fun activities, food style, or keeping total spend under budget) into polished, concise, executive-grade titles.',
+            '2. Instead, professionally interpret the Client Notes into polished, concise, executive-grade titles.',
             '3. If the client mentions not spending the entire budget, make the sum of expenses 80% to 85% of Rs. ' + budgetNum + ' so they have an unspent reserve. Otherwise, make expenses roughly equal Rs. ' + budgetNum + '.',
             '4. Respond strictly in valid JSON format with no markdown wrappers.',
             '{',
-            '  "summary": "<h3>Creative Strategy: ' + body.name + '</h3><p>2-3 sentences of polished executive strategy tailored to the audience, timing, and vibe.</p>",',
+            '  "summary": "<h3>Creative Strategy: ' + safeName + '</h3><p>2-3 sentences of polished executive strategy tailored to the audience, timing, and vibe.</p>",',
             '  "expenses": [',
             '    { "name": "Polished Expense Title (3-7 words)", "cost": 15000 }',
             '  ],',
@@ -35,14 +73,13 @@ module.exports = async function(req, res) {
             'Provide 4 to 5 expenses and exactly 8 tasks (2 tasks for each phase 1, 2, 3, and 4).'
         ].join('\n');
 
-        const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
         let rawOutput = null;
-        let lastError = "Model experiencing high demand.";
+        let lastError = 'Model experiencing high demand.';
 
-        for (let i = 0; i < modelsToTry.length; i++) {
-            const modelName = modelsToTry[i];
+        for (let i = 0; i < CANDIDATE_MODELS.length; i++) {
+            const modelName = CANDIDATE_MODELS[i];
             try {
-                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent?key=' + apiKey, {
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent?key=' + encodeURIComponent(apiKey), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -71,16 +108,16 @@ module.exports = async function(req, res) {
         }
 
         if (!rawOutput) {
-            throw new Error(lastError);
+            return res.status(502).json({ error: lastError });
         }
 
         const fence = String.fromCharCode(96, 96, 96);
         rawOutput = String(rawOutput).split(fence + 'json').join('').split(fence + 'html').join('').split(fence).join('').trim();
 
         return res.status(200).json({ plan: rawOutput });
-
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json({ error: err.message || 'Internal Server Error' });
     }
 };
+
+module.exports.sanitizeField = sanitizeField;
